@@ -19,13 +19,14 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    应用生命周期管理：启动时初始化数据库表
+    应用生命周期管理：启动时初始化数据库表并写入初始数据
     """
-    logger.info("服务启动，初始化数据库...")
-    init_db()
-    
-    # 也可以在这里引入 seed 初始化逻辑，不过为了解耦这里不直接运行 seed
-    logger.info("数据库初始化完成")
+    logger.info("服务启动，正在自动配置数据库及管理员账号...")
+    try:
+        from backend.seed import seed
+        seed()
+    except Exception as e:
+        logger.error(f"数据库初始化失败，请检查配置：{e}")
     yield
     logger.info("服务关闭")
 

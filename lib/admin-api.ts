@@ -1,6 +1,6 @@
 import { Exhibition, fetchExhibitions, fetchExhibitionById } from './data';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 export const getAdminToken = () => {
     if (typeof window !== 'undefined') {
@@ -9,7 +9,7 @@ export const getAdminToken = () => {
     return null;
 };
 
-export const setAdminToken = (token: str) => {
+export const setAdminToken = (token: string) => {
     if (typeof window !== 'undefined') {
         localStorage.setItem('admin_token', token);
     }
@@ -48,7 +48,7 @@ export const adminFetch = async (endpoint: string, options: RequestInit = {}) =>
     return response;
 };
 
-export const adminLogin = async (username: str, password: str) => {
+export const adminLogin = async (username: string, password: string) => {
     const res = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -73,7 +73,7 @@ export const createExhibition = async (data: any) => {
     return res.json();
 };
 
-export const updateExhibition = async (id: number | str, data: any) => {
+export const updateExhibition = async (id: number | string, data: any) => {
     const res = await adminFetch(`/api/exhibitions/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
@@ -82,7 +82,7 @@ export const updateExhibition = async (id: number | str, data: any) => {
     return res.json();
 };
 
-export const deleteExhibition = async (id: number | str) => {
+export const deleteExhibition = async (id: number | string) => {
     const res = await adminFetch(`/api/exhibitions/${id}`, {
         method: 'DELETE',
     });
