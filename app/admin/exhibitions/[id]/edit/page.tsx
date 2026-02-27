@@ -12,7 +12,7 @@ export default function EditExhibition() {
 
     useEffect(() => {
         fetchExhibitionById(params.id as string).then(data => {
-            setExhibition(data);
+            setExhibition(data || null);
             setLoading(false);
         });
     }, [params.id]);
