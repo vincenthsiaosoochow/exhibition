@@ -19,13 +19,22 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  output: 'standalone',
   transpilePackages: ['motion'],
   async rewrites() {
+    let backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
+
+    // Zeabur dashboard 注入的环境变量字符串如果未被转译，在 JS 中替换它们
+    if (backendUrl.includes('${EXHIBITION_HOST}')) {
+      backendUrl = backendUrl.replace('${EXHIBITION_HOST}', process.env.EXHIBITION_HOST || 'localhost');
+    }
+    if (backendUrl.includes('${EXHIBITION_PORT}')) {
+      backendUrl = backendUrl.replace('${EXHIBITION_PORT}', process.env.EXHIBITION_PORT || '8000');
+    }
+
     return [
       {
         source: '/api/:path*',
-        destination: `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/:path*`,
+        destination: `${backendUrl}/api/:path*`,
       },
     ];
   },
