@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy import Column, Integer, String, Date, Enum, Text, ForeignKey
 from sqlalchemy.orm import relationship
-from backend.database import Base
+from database import Base
 
 
 class Exhibition(Base):

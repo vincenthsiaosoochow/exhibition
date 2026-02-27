@@ -9,8 +9,8 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
-from backend.database import get_db
-from backend.models.admin import Admin
+from database import get_db
+from models.admin import Admin
 
 logger = logging.getLogger(__name__)
 

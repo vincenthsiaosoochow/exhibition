@@ -4,12 +4,12 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from backend.database import get_db
-from backend.models.admin import Admin
-from backend.schemas.exhibition import ExhibitionResponse, ExhibitionListResponse
-from backend.schemas.exhibition_write import ExhibitionCreate, ExhibitionUpdate
-from backend.service import exhibition_service
-from backend.service.auth_service import get_current_admin
+from database import get_db
+from models.admin import Admin
+from schemas.exhibition import ExhibitionResponse, ExhibitionListResponse
+from schemas.exhibition_write import ExhibitionCreate, ExhibitionUpdate
+from service import exhibition_service
+from service.auth_service import get_current_admin
 
 logger = logging.getLogger(__name__)
 

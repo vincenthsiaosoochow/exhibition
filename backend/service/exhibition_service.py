@@ -4,9 +4,9 @@ from typing import Optional
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import or_
 
-from backend.models.exhibition import Exhibition, ExhibitionArtist, ExhibitionImage
-from backend.schemas.exhibition import ExhibitionResponse
-from backend.schemas.exhibition_write import ExhibitionCreate, ExhibitionUpdate
+from models.exhibition import Exhibition, ExhibitionArtist, ExhibitionImage
+from schemas.exhibition import ExhibitionResponse
+from schemas.exhibition_write import ExhibitionCreate, ExhibitionUpdate
 
 logger = logging.getLogger(__name__)
 

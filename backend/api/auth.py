@@ -2,9 +2,9 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from backend.database import get_db
-from backend.schemas.admin import AdminLoginRequest, TokenResponse
-from backend.service import auth_service
+from database import get_db
+from schemas.admin import AdminLoginRequest, TokenResponse
+from service import auth_service
 
 logger = logging.getLogger(__name__)
 

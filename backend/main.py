@@ -5,9 +5,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api.auth import router as auth_router
-from backend.api.exhibitions import router as exhibitions_router
-from backend.database import init_db
+from api.auth import router as auth_router
+from api.exhibitions import router as exhibitions_router
+from database import init_db
 
 logging.basicConfig(
     level=logging.INFO,
@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):
     """
     logger.info("服务启动，正在自动配置数据库及管理员账号...")
     try:
-        from backend.seed import seed
+        from seed import seed
         seed()
     except Exception as e:
         logger.error(f"数据库初始化失败，请检查配置：{e}")

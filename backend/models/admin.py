@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from sqlalchemy import Column, Integer, String, Boolean
-from backend.database import Base
+from database import Base
 
 
 class Admin(Base):

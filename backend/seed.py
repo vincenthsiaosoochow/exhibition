@@ -9,8 +9,8 @@ import sys
 # 允许从项目根目录直接运行
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from backend.database import SessionLocal, init_db
-from backend.models.exhibition import Exhibition, ExhibitionArtist, ExhibitionImage
+from database import SessionLocal, init_db
+from models.exhibition import Exhibition, ExhibitionArtist, ExhibitionImage
 from datetime import date
 
 logging.basicConfig(level=logging.INFO)
@@ -162,8 +162,8 @@ def seed():
     init_db()
 
     # 引入 auth_service
-    from backend.service.auth_service import hash_password
-    from backend.models.admin import Admin
+    from service.auth_service import hash_password
+    from models.admin import Admin
 
     db = SessionLocal()
     try:
