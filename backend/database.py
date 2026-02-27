@@ -8,12 +8,13 @@ logger = logging.getLogger(__name__)
 # 优先使用 DATABASE_URL，如果没有则尝试使用 Zeabur 提供的 MySQL 环境变量自动拼装
 db_url = os.getenv("DATABASE_URL")
 if not db_url:
-    mysql_user = os.getenv("MYSQL_USER", "root")
+    mysql_user = os.getenv("MYSQL_USER") or os.getenv("MYSQL_USERNAME", "root")
     mysql_password = os.getenv("MYSQL_PASSWORD", "root")
     mysql_host = os.getenv("MYSQL_HOST", "localhost")
     mysql_port = os.getenv("MYSQL_PORT", "3306")
     mysql_db = os.getenv("MYSQL_DATABASE", "exhibition")
     db_url = f"mysql+pymysql://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_db}"
+    logger.info(f"Using assembled DB URL: mysql+pymysql://{mysql_user}:***@{mysql_host}:{mysql_port}/{mysql_db}")
 
 DATABASE_URL = db_url
 
