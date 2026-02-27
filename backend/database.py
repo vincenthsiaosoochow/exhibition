@@ -38,5 +38,6 @@ def init_db():
     创建所有数据库表（如不存在）
     """
     from backend.models import exhibition  # noqa: F401 触发模型注册
+    from backend.models import admin       # noqa: F401 触发 Admin 模型注册
     Base.metadata.create_all(bind=engine)
     logger.info("数据库表初始化完成")
