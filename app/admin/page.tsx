@@ -7,11 +7,20 @@ import Link from 'next/link';
 import { Plus, Edit2, Trash2, Search, ExternalLink } from 'lucide-react';
 import Image from 'next/image';
 import { format, parseISO } from 'date-fns';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+    title: 'Dashboard',
+};
 
 export default function AdminExhibitions() {
     const [exhibitions, setExhibitions] = useState<Exhibition[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+
+    useEffect(() => {
+        document.title = 'Admin Dashboard | FUHUNG ART EXHIBITION';
+    }, []);
 
     const loadData = async () => {
         setLoading(true);

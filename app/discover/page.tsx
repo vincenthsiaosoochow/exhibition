@@ -11,6 +11,10 @@ import { useAppStore } from '@/lib/store';
 
 export default function Discover() {
   const { t, language } = useTranslation();
+
+  useEffect(() => {
+    document.title = 'Discover | FUHUNG ART EXHIBITION';
+  }, []);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const searchQuery = useAppStore((state) => state.searchQuery);
   const [allExhibitions, setAllExhibitions] = useState<Exhibition[]>([]);

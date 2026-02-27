@@ -9,6 +9,29 @@ import { motion, useScroll, useTransform } from 'motion/react';
 import { ArrowLeft, Share2, MapPin, Calendar, Clock, Train, Copy, Check } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import clsx from 'clsx';
+import type { Metadata } from 'next';
+
+type Props = {
+  params: Promise<{ id: string }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const resolvedParams = await params;
+  const id = resolvedParams.id;
+  const exhibition = await fetchExhibitionById(id);
+
+  if (!exhibition) {
+    return {
+      title: 'Exhibition Not Found'
+    };
+  }
+
+  // 对于 SSR metadata 这里简单取英文或中文标题均可，服务端如果无法从 cookie 判断语言，可以默认给双语或者主语言
+  return {
+    title: `${exhibition.title.zh} | ${exhibition.title.en}`,
+    description: exhibition.description.zh
+  };
+}
 
 export default function ExhibitionDetails() {
   const params = useParams();

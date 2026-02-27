@@ -12,6 +12,10 @@ import { useAppStore } from '@/lib/store';
 
 export default function Home() {
   const { t, language } = useTranslation();
+
+  useEffect(() => {
+    document.title = 'Home | FUHUNG ART EXHIBITION';
+  }, []);
   const searchQuery = useAppStore((state) => state.searchQuery);
   const [exhibitions, setExhibitions] = useState<Exhibition[]>([]);
   const [loading, setLoading] = useState(true);

@@ -1,13 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminLogin } from '@/lib/admin-api';
 import { Lock, User } from 'lucide-react';
 import { motion } from 'motion/react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+    title: 'Admin Login',
+};
 
 export default function AdminLogin() {
     const router = useRouter();
+
+    useEffect(() => {
+        document.title = 'Admin Login | FUHUNG ART EXHIBITION';
+    }, []);
+
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');

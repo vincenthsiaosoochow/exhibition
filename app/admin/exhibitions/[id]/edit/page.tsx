@@ -7,6 +7,11 @@ import AdminExhibitionForm from '@/components/AdminExhibitionForm';
 
 export default function EditExhibition() {
     const params = useParams();
+
+    useEffect(() => {
+        document.title = 'Edit Exhibition | FUHUNG ART EXHIBITION';
+    }, []);
+
     const [exhibition, setExhibition] = useState<Exhibition | null>(null);
     const [loading, setLoading] = useState(true);
 

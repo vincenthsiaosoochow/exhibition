@@ -6,6 +6,11 @@ import { getAdminToken, removeAdminToken } from '@/lib/admin-api';
 import Link from 'next/link';
 import { LayoutDashboard, LogOut, Plus, Settings } from 'lucide-react';
 import clsx from 'clsx';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+    title: 'Admin Dashboard',
+};
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
