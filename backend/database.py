@@ -15,6 +15,11 @@ if not db_url:
     mysql_db = os.getenv("MYSQL_DATABASE", "exhibition")
     db_url = f"mysql+pymysql://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_db}"
     logger.info(f"Using assembled DB URL: mysql+pymysql://{mysql_user}:***@{mysql_host}:{mysql_port}/{mysql_db}")
+else:
+    # 强制将 `mysql://` 自动转换为 `mysql+pymysql://` 供 SQLAlchemy 使用
+    if db_url.startswith("mysql://"):
+        db_url = db_url.replace("mysql://", "mysql+pymysql://", 1)
+    logger.info("Using provided DATABASE_URL (password hidden)")
 
 DATABASE_URL = db_url
 
