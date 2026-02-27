@@ -5,8 +5,17 @@ from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
 logger = logging.getLogger(__name__)
 
-# NOTE: DATABASE_URL 格式：mysql+pymysql://user:password@host:port/dbname
-DATABASE_URL = os.getenv("DATABASE_URL", "mysql+pymysql://root:root@localhost:3306/exhibition")
+# 优先使用 DATABASE_URL，如果没有则尝试使用 Zeabur 提供的 MySQL 环境变量自动拼装
+db_url = os.getenv("DATABASE_URL")
+if not db_url:
+    mysql_user = os.getenv("MYSQL_USER", "root")
+    mysql_password = os.getenv("MYSQL_PASSWORD", "root")
+    mysql_host = os.getenv("MYSQL_HOST", "localhost")
+    mysql_port = os.getenv("MYSQL_PORT", "3306")
+    mysql_db = os.getenv("MYSQL_DATABASE", "exhibition")
+    db_url = f"mysql+pymysql://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_db}"
+
+DATABASE_URL = db_url
 
 engine = create_engine(
     DATABASE_URL,
