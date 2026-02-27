@@ -5,8 +5,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.database import init_db
+from backend.api.auth import router as auth_router
 from backend.api.exhibitions import router as exhibitions_router
+from backend.database import init_db
 
 logging.basicConfig(
     level=logging.INFO,
@@ -22,6 +23,8 @@ async def lifespan(app: FastAPI):
     """
     logger.info("服务启动，初始化数据库...")
     init_db()
+    
+    # 也可以在这里引入 seed 初始化逻辑，不过为了解耦这里不直接运行 seed
     logger.info("数据库初始化完成")
     yield
     logger.info("服务关闭")
@@ -50,6 +53,7 @@ app.add_middleware(
 )
 
 # 注册路由
+app.include_router(auth_router)
 app.include_router(exhibitions_router)
 
 

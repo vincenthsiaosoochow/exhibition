@@ -161,8 +161,27 @@ def seed():
     """
     init_db()
 
+    # 引入 auth_service
+    from backend.service.auth_service import hash_password
+    from backend.models.admin import Admin
+
     db = SessionLocal()
     try:
+        # 1. 初始化默认管理员
+        admin_username = os.getenv("ADMIN_USERNAME", "admin")
+        admin_password = os.getenv("ADMIN_PASSWORD", "admin888")
+        
+        admin = db.query(Admin).filter(Admin.username == admin_username).first()
+        if not admin:
+            hashed = hash_password(admin_password)
+            new_admin = Admin(username=admin_username, hashed_password=hashed)
+            db.add(new_admin)
+            db.commit()
+            logger.info(f"成功创建默认管理员账号: {admin_username}")
+        else:
+            logger.info(f"管理员账号 {admin_username} 已存在")
+
+        # 2. 初始化展览数据
         existing_count = db.query(Exhibition).count()
         if existing_count > 0:
             logger.info(f"数据库中已存在 {existing_count} 条展览数据，跳过种子初始化")
@@ -191,6 +210,6 @@ def seed():
     finally:
         db.close()
 
-
 if __name__ == "__main__":
     seed()
+

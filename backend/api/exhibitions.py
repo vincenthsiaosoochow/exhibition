@@ -1,12 +1,15 @@
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
+from backend.models.admin import Admin
 from backend.schemas.exhibition import ExhibitionResponse, ExhibitionListResponse
+from backend.schemas.exhibition_write import ExhibitionCreate, ExhibitionUpdate
 from backend.service import exhibition_service
+from backend.service.auth_service import get_current_admin
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +22,7 @@ def list_exhibitions(
     continent: Optional[str] = Query(None, description="大洲筛选"),
     country: Optional[str] = Query(None, description="国家筛选"),
     city: Optional[str] = Query(None, description="城市筛选"),
-    status: Optional[str] = Query(None, description="状态筛选：recent/ending/longTerm"),
+    status_filter: Optional[str] = Query(None, alias="status", description="状态筛选：recent/ending/longTerm"),
     price: Optional[str] = Query(None, description="票价筛选：free/paid"),
     db: Session = Depends(get_db),
 ) -> ExhibitionListResponse:
@@ -32,7 +35,7 @@ def list_exhibitions(
         continent=continent,
         country=country,
         city=city,
-        status=status,
+        status=status_filter,
         price=price,
     )
     return ExhibitionListResponse(total=len(items), items=items)
@@ -50,3 +53,49 @@ def get_exhibition(
     if not exhibition:
         raise HTTPException(status_code=404, detail="Exhibition not found")
     return exhibition
+
+
+@router.post("", response_model=ExhibitionResponse, status_code=status.HTTP_201_CREATED)
+def create_exhibition(
+    data: ExhibitionCreate,
+    db: Session = Depends(get_db),
+    admin: Admin = Depends(get_current_admin),
+) -> ExhibitionResponse:
+    """
+    创建新展览（需要管理员权限）
+    """
+    logger.info(f"管理员 {admin.username} 创建了新展览：{data.title_en}")
+    return exhibition_service.create_exhibition(db=db, data=data)
+
+
+@router.put("/{exhibition_id}", response_model=ExhibitionResponse)
+def update_exhibition(
+    exhibition_id: int,
+    data: ExhibitionUpdate,
+    db: Session = Depends(get_db),
+    admin: Admin = Depends(get_current_admin),
+) -> ExhibitionResponse:
+    """
+    更新展览（需要管理员权限）
+    """
+    exhibition = exhibition_service.update_exhibition(db=db, exhibition_id=exhibition_id, data=data)
+    if not exhibition:
+        raise HTTPException(status_code=404, detail="Exhibition not found")
+    logger.info(f"管理员 {admin.username} 更新了展览：{exhibition_id}")
+    return exhibition
+
+
+@router.delete("/{exhibition_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_exhibition(
+    exhibition_id: int,
+    db: Session = Depends(get_db),
+    admin: Admin = Depends(get_current_admin),
+):
+    """
+    删除展览（需要管理员权限）
+    """
+    success = exhibition_service.delete_exhibition(db=db, exhibition_id=exhibition_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Exhibition not found")
+    logger.info(f"管理员 {admin.username} 删除了展览：{exhibition_id}")
+
