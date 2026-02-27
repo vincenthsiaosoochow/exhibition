@@ -1,0 +1,5 @@
+{
+  "name": "FUHUNG ART EXHIBITION",
+  "description": "A lightweight Web/H5 app to browse, discover, and explore global art exhibitions with offline capabilities.",
+  "requestFramePermissions": ["geolocation"]
+}

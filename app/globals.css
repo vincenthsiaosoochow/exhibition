@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #2563EB;
+  --color-surface: #F8FAFC;
+  --color-fuhung-blue: #0057FF;
+  --color-fuhung-light-blue: #EBF2FF;
+  
+  --font-sans: var(--font-noto), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply font-sans bg-white;
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
