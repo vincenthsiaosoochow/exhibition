@@ -29,7 +29,7 @@ export default function AdminExhibitions() {
         loadData();
     }, []);
 
-    const handleDelete = async (id: str) => {
+    const handleDelete = async (id: string) => {
         if (confirm('确定要删除这个展览吗？删除后不可恢复。')) {
             try {
                 await deleteExhibition(id);
