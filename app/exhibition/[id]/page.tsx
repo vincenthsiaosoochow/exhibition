@@ -59,7 +59,7 @@ export default function ExhibitionDetails() {
   const description = exhibition.description[language];
   const address = exhibition.address[language];
   const hours = exhibition.hours[language];
-  const transport = exhibition.transport[language];
+  const bookingUrl = exhibition.bookingUrl;
   const startDate = format(parseISO(exhibition.startDate), 'MMM d, yyyy');
   const endDate = format(parseISO(exhibition.endDate), 'MMM d, yyyy');
 
@@ -232,21 +232,18 @@ export default function ExhibitionDetails() {
                 </div>
               </div>
 
-              <div className="flex gap-4">
-                <Train className="w-6 h-6 text-neutral-400 shrink-0" />
-                <div>
-                  <p className="font-medium text-neutral-900">{transport}</p>
-                </div>
-              </div>
+
             </div>
           </div>
 
-          <button
-            onClick={() => alert('预约功能即将上线！')}
-            className="w-full py-4 bg-black text-white rounded-2xl font-bold text-lg hover:bg-neutral-800 transition-all shadow-lg hover:shadow-xl active:scale-[0.98]"
-          >
-            {t('details.bookNow')}
-          </button>
+          {bookingUrl && (
+            <button
+              onClick={() => window.open(bookingUrl, '_blank')}
+              className="w-full py-4 bg-black text-white rounded-2xl font-bold text-lg hover:bg-neutral-800 transition-all shadow-lg hover:shadow-xl active:scale-[0.98]"
+            >
+              {t('details.bookNow')}
+            </button>
+          )}
         </div>
 
       </div>

@@ -94,8 +94,8 @@ export async function POST(req: NextRequest) {
         const [result] = await db.execute<ResultSetHeader>(
             `INSERT INTO exhibitions (title_en, title_zh, venue_en, venue_zh, continent, country, city,
        start_date, end_date, cover_image, price, status, description_en, description_zh,
-       address_en, address_zh, hours_en, hours_zh, transport_en, transport_zh)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       address_en, address_zh, hours_en, hours_zh, booking_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 data.title_en, data.title_zh, data.venue_en, data.venue_zh,
                 data.continent, data.country, data.city,
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
                 data.description_en || '', data.description_zh || '',
                 data.address_en || '', data.address_zh || '',
                 data.hours_en || '', data.hours_zh || '',
-                data.transport_en || '', data.transport_zh || '',
+                data.booking_url || '',
             ]
         );
 

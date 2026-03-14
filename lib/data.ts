@@ -31,10 +31,7 @@ export interface Exhibition {
     en: string;
     zh: string;
   };
-  transport: {
-    en: string;
-    zh: string;
-  };
+  bookingUrl: string;
   images: string[];
 }
 
@@ -60,8 +57,7 @@ interface ApiExhibition {
   address_zh: string;
   hours_en: string;
   hours_zh: string;
-  transport_en: string;
-  transport_zh: string;
+  booking_url: string;
   artists: string[];
   images: string[];
 }
@@ -89,7 +85,7 @@ function toExhibition(api: ApiExhibition): Exhibition {
     artists: api.artists,
     address: { en: api.address_en, zh: api.address_zh },
     hours: { en: api.hours_en, zh: api.hours_zh },
-    transport: { en: api.transport_en, zh: api.transport_zh },
+    bookingUrl: api.booking_url || '',
     images: api.images,
   };
 }
@@ -189,10 +185,7 @@ export const mockExhibitions: Exhibition[] = [
       en: 'Mon-Sun: 10:00 AM - 6:00 PM',
       zh: '周一至周日：上午 10:00 - 下午 6:00'
     },
-    transport: {
-      en: 'Metro Line 3 (Rue Saint-Maur)',
-      zh: '地铁3号线 (Rue Saint-Maur)'
-    },
+    bookingUrl: 'https://atelier-lumieres.com/tickets',
     images: [
       'https://picsum.photos/800/600?random=11',
       'https://picsum.photos/800/600?random=12'
@@ -231,10 +224,7 @@ export const mockExhibitions: Exhibition[] = [
       en: 'Mon-Sun: 10:00 AM - 6:00 PM',
       zh: '周一至周日：上午 10:00 - 下午 6:00'
     },
-    transport: {
-      en: 'Tube: Southwark or Blackfriars',
-      zh: '地铁：Southwark 或 Blackfriars'
-    },
+    bookingUrl: 'https://tate.org.uk/tickets',
     images: [
       'https://picsum.photos/800/600?random=21',
       'https://picsum.photos/800/600?random=22'
@@ -273,10 +263,7 @@ export const mockExhibitions: Exhibition[] = [
       en: 'Tue-Sun: 10:00 AM - 6:00 PM',
       zh: '周二至周日：上午 10:00 - 下午 6:00'
     },
-    transport: {
-      en: 'MyCiTi Bus to Silo stop',
-      zh: '乘坐 MyCiTi 巴士至 Silo 站'
-    },
+    bookingUrl: 'https://zeitzmocaa.museum/tickets',
     images: [
       'https://picsum.photos/800/600?random=31',
       'https://picsum.photos/800/600?random=32'
@@ -315,10 +302,7 @@ export const mockExhibitions: Exhibition[] = [
       en: 'Sun-Fri: 10:30 AM - 5:30 PM, Sat: 10:30 AM - 7:00 PM',
       zh: '周日至周五：上午 10:30 - 下午 5:30，周六：上午 10:30 - 晚上 7:00'
     },
-    transport: {
-      en: 'Subway E, M to 53rd St',
-      zh: '地铁 E, M 线至 53 街'
-    },
+    bookingUrl: 'https://www.moma.org/tickets/',
     images: [
       'https://picsum.photos/800/600?random=41',
       'https://picsum.photos/800/600?random=42'
@@ -357,10 +341,7 @@ export const mockExhibitions: Exhibition[] = [
       en: 'Tue-Sun: 9:00 AM - 5:00 PM',
       zh: '周二至周日：上午 9:00 - 下午 5:00'
     },
-    transport: {
-      en: 'MRT Shilin Station, then bus R30',
-      zh: '捷运士林站，转乘红30公交车'
-    },
+    bookingUrl: 'https://npm.gov.tw/tickets',
     images: [
       'https://picsum.photos/800/600?random=51',
       'https://picsum.photos/800/600?random=52'

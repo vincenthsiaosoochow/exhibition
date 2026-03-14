@@ -74,8 +74,7 @@ export async function initDb(): Promise<void> {
       address_zh VARCHAR(500) NOT NULL DEFAULT '',
       hours_en VARCHAR(255) NOT NULL DEFAULT '',
       hours_zh VARCHAR(255) NOT NULL DEFAULT '',
-      transport_en VARCHAR(500) NOT NULL DEFAULT '',
-      transport_zh VARCHAR(500) NOT NULL DEFAULT ''
+      booking_url VARCHAR(500) NOT NULL DEFAULT ''
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
 
@@ -148,12 +147,12 @@ async function seedExhibitions(db: mysql.Pool): Promise<void> {
             venue_en: 'Atelier des Lumières', venue_zh: '光之工坊',
             continent: 'Europe', country: 'France', city: 'Paris',
             start_date: '2026-01-15', end_date: '2026-06-30',
-            cover_image: 'https://picsum.photos/800/600?random=1', price: 'paid', status: 'recent',
+            cover_image: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80', price: 'paid', status: 'recent',
             description_en: 'Step into the paintings of Vincent van Gogh in this breathtaking immersive exhibition.',
             description_zh: '在这个令人惊叹的沉浸式展览中，走进文森特·梵高的画作。',
             address_en: '38 Rue Saint-Maur, 75011 Paris, France', address_zh: '法国巴黎圣莫尔街38号，邮编75011',
-            hours_en: 'Mon-Sun: 10:00 AM - 6:00 PM', hours_zh: '周一至周日：上午 10:00 - 下午 6:00',
-            transport_en: 'Metro Line 3 (Rue Saint-Maur)', transport_zh: '地铁3号线 (Rue Saint-Maur)',
+            hours_en: '10:00 - 18:00 (Closed on Tuesdays)', hours_zh: '10:00 - 18:00 (周二闭馆)',
+            booking_url: 'https://atelier-lumieres.com/tickets',
             artists: ['Vincent van Gogh'], images: ['https://picsum.photos/800/600?random=11', 'https://picsum.photos/800/600?random=12'],
         },
         {
@@ -161,12 +160,12 @@ async function seedExhibitions(db: mysql.Pool): Promise<void> {
             venue_en: 'Tate Modern', venue_zh: '泰特现代美术馆',
             continent: 'Europe', country: 'UK', city: 'London',
             start_date: '2025-11-01', end_date: '2026-06-15',
-            cover_image: 'https://picsum.photos/800/600?random=2', price: 'paid', status: 'ending',
+            cover_image: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80', price: 'paid', status: 'ending',
             description_en: 'Experience the mesmerizing infinity mirror rooms by the legendary Japanese artist.',
             description_zh: '体验传奇日本艺术家令人着迷的无限镜像房间。',
             address_en: 'Bankside, London SE1 9TG, UK', address_zh: '英国伦敦河岸街 SE1 9TG',
-            hours_en: 'Mon-Sun: 10:00 AM - 6:00 PM', hours_zh: '周一至周日：上午 10:00 - 下午 6:00',
-            transport_en: 'Tube: Southwark or Blackfriars', transport_zh: '地铁：Southwark 或 Blackfriars',
+            hours_en: '10:00 - 18:00', hours_zh: '10:00 - 18:00',
+            booking_url: 'https://tate.org.uk/tickets',
             artists: ['Yayoi Kusama'], images: ['https://picsum.photos/800/600?random=21', 'https://picsum.photos/800/600?random=22'],
         },
         {
@@ -174,12 +173,12 @@ async function seedExhibitions(db: mysql.Pool): Promise<void> {
             venue_en: 'Zeitz MOCAA', venue_zh: '蔡茨非洲当代艺术博物馆',
             continent: 'Africa', country: 'South Africa', city: 'Cape Town',
             start_date: '2024-01-01', end_date: '2028-12-31',
-            cover_image: 'https://picsum.photos/800/600?random=3', price: 'free', status: 'longTerm',
+            cover_image: 'https://images.unsplash.com/photo-1531058020387-3be344556be6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80', price: 'free', status: 'longTerm',
             description_en: 'A comprehensive collection of contemporary art from Africa and its diaspora.',
             description_zh: '全面展示来自非洲及其侨民的当代艺术收藏。',
             address_en: 'V&A Waterfront, Silo District, Cape Town, 8001', address_zh: '开普敦 V&A 滨水区筒仓区',
-            hours_en: 'Tue-Sun: 10:00 AM - 6:00 PM', hours_zh: '周二至周日：上午 10:00 - 下午 6:00',
-            transport_en: 'MyCiTi Bus to Silo stop', transport_zh: '乘坐 MyCiTi 巴士至 Silo 站',
+            hours_en: '10:00 - 18:00 (Closed on Tuesdays)', hours_zh: '10:00 - 18:00 (周二闭馆)',
+            booking_url: 'https://zeitzmocaa.museum/tickets',
             artists: ['Various Artists'], images: ['https://picsum.photos/800/600?random=31', 'https://picsum.photos/800/600?random=32'],
         },
         {
@@ -187,12 +186,12 @@ async function seedExhibitions(db: mysql.Pool): Promise<void> {
             venue_en: 'MoMA', venue_zh: '现代艺术博物馆',
             continent: 'North America', country: 'USA', city: 'New York',
             start_date: '2026-02-01', end_date: '2026-08-30',
-            cover_image: 'https://picsum.photos/800/600?random=4', price: 'paid', status: 'recent',
+            cover_image: 'https://images.unsplash.com/photo-1545987796-200677ee1011?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80', price: 'paid', status: 'recent',
             description_en: 'Exploring the intersection of classical art and modern digital mediums.',
             description_zh: '探索古典艺术与现代数字媒介的交汇。',
             address_en: '11 W 53rd St, New York, NY 10019, USA', address_zh: '美国纽约西53街11号，邮编10019',
-            hours_en: 'Sun-Fri: 10:30 AM - 5:30 PM', hours_zh: '周日至周五：上午 10:30 - 下午 5:30',
-            transport_en: 'Subway E, M to 53rd St', transport_zh: '地铁 E, M 线至 53 街',
+            hours_en: '10:30 - 17:30', hours_zh: '10:30 - 17:30',
+            booking_url: 'https://moma.org/tickets',
             artists: ['Refik Anadol', 'Beeple'], images: ['https://picsum.photos/800/600?random=41', 'https://picsum.photos/800/600?random=42'],
         },
         {
@@ -200,23 +199,24 @@ async function seedExhibitions(db: mysql.Pool): Promise<void> {
             venue_en: 'National Palace Museum', venue_zh: '国立故宫博物院',
             continent: 'Asia', country: 'Taiwan', city: 'Taipei',
             start_date: '2026-01-10', end_date: '2026-10-10',
-            cover_image: 'https://picsum.photos/800/600?random=5', price: 'paid', status: 'recent',
+            cover_image: 'https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80', price: 'paid', status: 'recent',
             description_en: 'A journey through the history and evolution of Chinese calligraphy.',
             description_zh: '一段穿越中国书法历史与演变的旅程。',
             address_en: 'No. 221, Sec 2, Zhi Shan Rd, Shilin District, Taipei, 111', address_zh: '台湾台北市士林区至善路二段221号',
-            hours_en: 'Tue-Sun: 9:00 AM - 5:00 PM', hours_zh: '周二至周日：上午 9:00 - 下午 5:00',
-            transport_en: 'MRT Shilin Station, then bus R30', transport_zh: '捷运士林站，转乘红30公交车',
+            hours_en: '09:00 - 17:00 (Closed on Mondays)', hours_zh: '09:00 - 17:00 (周一闭馆)',
+            booking_url: 'https://npm.gov.tw/tickets',
             artists: ['Wang Xizhi', 'Yan Zhenqing'], images: ['https://picsum.photos/800/600?random=51', 'https://picsum.photos/800/600?random=52'],
         },
     ];
 
     for (const item of seedData) {
         const { artists, images, ...exhibitionData } = item;
+        const insertQuery = `
+      INSERT INTO exhibitions (title_en, title_zh, venue_en, venue_zh, continent, country, city, start_date, end_date, cover_image, price, status, description_en, description_zh, address_en, address_zh, hours_en, hours_zh, booking_url)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
         const [result] = await db.execute<mysql.ResultSetHeader>(
-            `INSERT INTO exhibitions (title_en, title_zh, venue_en, venue_zh, continent, country, city,
-       start_date, end_date, cover_image, price, status, description_en, description_zh,
-       address_en, address_zh, hours_en, hours_zh, transport_en, transport_zh)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            insertQuery,
             [
                 exhibitionData.title_en, exhibitionData.title_zh,
                 exhibitionData.venue_en, exhibitionData.venue_zh,
@@ -226,7 +226,7 @@ async function seedExhibitions(db: mysql.Pool): Promise<void> {
                 exhibitionData.description_en, exhibitionData.description_zh,
                 exhibitionData.address_en, exhibitionData.address_zh,
                 exhibitionData.hours_en, exhibitionData.hours_zh,
-                exhibitionData.transport_en, exhibitionData.transport_zh,
+                exhibitionData.booking_url
             ]
         );
         const exhibitionId = result.insertId;

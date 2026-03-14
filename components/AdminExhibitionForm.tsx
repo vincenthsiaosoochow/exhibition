@@ -51,7 +51,7 @@ export default function AdminExhibitionForm({ initialData, isEdit }: AdminExhibi
         description_zh: initialData?.description?.zh || '',
         address_zh: initialData?.address?.zh || '',
         hours_zh: initialData?.hours?.zh || '',
-        transport_zh: initialData?.transport?.zh || '',
+        booking_url: initialData?.bookingUrl || '',
         artists: initialData?.artists || [] as string[],
         images: initialData?.images || [] as string[],
     });
@@ -138,7 +138,7 @@ export default function AdminExhibitionForm({ initialData, isEdit }: AdminExhibi
                 description_en: formData.description_zh,
                 address_en: formData.address_zh,
                 hours_en: formData.hours_zh,
-                transport_en: formData.transport_zh,
+                booking_url: formData.booking_url,
             };
 
             if (isEdit && initialData) {
@@ -308,8 +308,8 @@ export default function AdminExhibitionForm({ initialData, isEdit }: AdminExhibi
                             <input type="text" value={formData.hours_zh} onChange={e => handleChange('hours_zh', e.target.value)} placeholder="如：周二至周日 10:00-18:00，周一闭馆" className="w-full p-3 border border-neutral-200 rounded-xl" />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">交通指南</label>
-                            <input type="text" value={formData.transport_zh} onChange={e => handleChange('transport_zh', e.target.value)} placeholder="如：地铁4号线世博大道站6号出口" className="w-full p-3 border border-neutral-200 rounded-xl" />
+                            <label className="text-sm font-medium">预约网址</label>
+                            <input type="text" value={formData.booking_url} onChange={e => handleChange('booking_url', e.target.value)} placeholder="如：https://xxx.com/tickets" className="w-full p-3 border border-neutral-200 rounded-xl" />
                         </div>
                     </div>
                 </section>
