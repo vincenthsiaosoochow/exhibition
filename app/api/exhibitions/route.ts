@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ total: items.length, items });
     } catch (err) {
         console.error('[GET /api/exhibitions]', err);
-        return NextResponse.json({ detail: '服务器内部错误' }, { status: 500 });
+        return NextResponse.json({ detail: err instanceof Error ? err.message : String(err) }, { status: 500 });
     }
 }
 
@@ -121,6 +121,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(exhibition, { status: 201 });
     } catch (err) {
         console.error('[POST /api/exhibitions]', err);
-        return NextResponse.json({ detail: '服务器内部错误' }, { status: 500 });
+        return NextResponse.json({ detail: err instanceof Error ? err.message : String(err) }, { status: 500 });
     }
 }

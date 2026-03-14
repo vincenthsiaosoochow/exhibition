@@ -130,7 +130,7 @@ export async function PUT(
         return NextResponse.json(exhibition);
     } catch (err) {
         console.error('[PUT /api/exhibitions/[id]]', err);
-        return NextResponse.json({ detail: '服务器内部错误' }, { status: 500 });
+        return NextResponse.json({ detail: err instanceof Error ? err.message : String(err) }, { status: 500 });
     }
 }
 
@@ -166,6 +166,6 @@ export async function DELETE(
         return new NextResponse(null, { status: 204 });
     } catch (err) {
         console.error('[DELETE /api/exhibitions/[id]]', err);
-        return NextResponse.json({ detail: '服务器内部错误' }, { status: 500 });
+        return NextResponse.json({ detail: err instanceof Error ? err.message : String(err) }, { status: 500 });
     }
 }
