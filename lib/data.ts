@@ -94,8 +94,12 @@ function toExhibition(api: ApiExhibition): Exhibition {
   };
 }
 
-// NOTE: 后端已迁移到 Next.js API Routes（同域），直接用相对路径即可
-const API_BASE_URL: string = '';
+const getBaseUrl = () => {
+    if (typeof window !== 'undefined') return ''; // 浏览器环境下使用相对路径，同源请求
+    // 服务端组件需绝对路径。如果有环境变量则使用，否则回环请求本机
+    if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+    return `http://localhost:${process.env.PORT || 3000}`;
+};
 
 export interface FetchExhibitionsParams {
   search?: string;
@@ -107,12 +111,9 @@ export interface FetchExhibitionsParams {
 }
 
 /**
- * 从后端获取展览列表，失败时 fallback 到 mock 数据
+ * 从后端获取展览列表，失败时抛出错误以便发现问题
  */
 export async function fetchExhibitions(params?: FetchExhibitionsParams): Promise<Exhibition[]> {
-  if (!API_BASE_URL) {
-    return mockExhibitions;
-  }
   try {
     const query = new URLSearchParams();
     if (params?.search) query.set('search', params.search);
@@ -122,15 +123,16 @@ export async function fetchExhibitions(params?: FetchExhibitionsParams): Promise
     if (params?.status && params.status !== 'all') query.set('status', params.status);
     if (params?.price && params.price !== 'all') query.set('price', params.price);
 
-    const url = `${API_BASE_URL}/api/exhibitions${query.toString() ? `?${query}` : ''}`;
-    const res = await fetch(url);
+    const baseUrl = getBaseUrl();
+    const url = `${baseUrl}/api/exhibitions${query.toString() ? `?${query}` : ''}`;
+    const res = await fetch(url, { cache: 'no-store' });
 
     if (!res.ok) throw new Error(`API error: ${res.status}`);
 
     const data: ApiListResponse = await res.json();
     return data.items.map(toExhibition);
   } catch (err) {
-    console.error('fetchExhibitions failed, using mock data:', err);
+    console.error('fetchExhibitions failed, returning mock data as fallback:', err);
     return mockExhibitions;
   }
 }
@@ -139,18 +141,16 @@ export async function fetchExhibitions(params?: FetchExhibitionsParams): Promise
  * 从后端获取单个展览详情，失败时 fallback 到 mock 数据
  */
 export async function fetchExhibitionById(id: string): Promise<Exhibition | undefined> {
-  if (!API_BASE_URL) {
-    return mockExhibitions.find((e) => e.id === id);
-  }
   try {
-    const res = await fetch(`${API_BASE_URL}/api/exhibitions/${id}`);
+    const baseUrl = getBaseUrl();
+    const res = await fetch(`${baseUrl}/api/exhibitions/${id}`, { cache: 'no-store' });
     if (res.status === 404) return undefined;
     if (!res.ok) throw new Error(`API error: ${res.status}`);
 
     const data: ApiExhibition = await res.json();
     return toExhibition(data);
   } catch (err) {
-    console.error(`fetchExhibitionById(${id}) failed, using mock data:`, err);
+    console.error(`fetchExhibitionById(${id}) failed, returning mock data as fallback:`, err);
     return mockExhibitions.find((e) => e.id === id);
   }
 }
