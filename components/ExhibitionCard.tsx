@@ -31,18 +31,34 @@ export default function ExhibitionCard({ exhibition }: { exhibition: Exhibition 
       <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 border border-neutral-100">
         <div ref={ref} className="relative aspect-[4/3] w-full bg-neutral-200 overflow-hidden">
           {inView && (
-            <Image
-              src={exhibition.coverImage}
-              alt={title}
-              fill
-              className={clsx(
-                "object-cover transition-all duration-700 ease-in-out group-hover:scale-105",
-                imageLoaded ? "blur-0 opacity-100" : "blur-md opacity-0"
-              )}
-              onLoad={() => setImageLoaded(true)}
-              referrerPolicy="no-referrer"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
+            // NOTE: 对于 /api/cover/ 形式的代理 URL 和 data: Base64，使用原生 img 标签
+            // 避免 next/image 的域名限制和 Base64 不支持问题
+            exhibition.coverImage.startsWith('/api/cover/') || exhibition.coverImage.startsWith('data:')
+            ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={exhibition.coverImage}
+                alt={title}
+                className={clsx(
+                  "absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out group-hover:scale-105",
+                  imageLoaded ? "blur-0 opacity-100" : "blur-md opacity-0"
+                )}
+                onLoad={() => setImageLoaded(true)}
+              />
+            ) : (
+              <Image
+                src={exhibition.coverImage}
+                alt={title}
+                fill
+                className={clsx(
+                  "object-cover transition-all duration-700 ease-in-out group-hover:scale-105",
+                  imageLoaded ? "blur-0 opacity-100" : "blur-md opacity-0"
+                )}
+                onLoad={() => setImageLoaded(true)}
+                referrerPolicy="no-referrer"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              />
+            )
           )}
           {!imageLoaded && (
             <div className="absolute inset-0 animate-pulse bg-neutral-200" />

@@ -109,13 +109,11 @@ export default function ExhibitionDetails() {
 
       {/* Hero Image */}
       <div className="relative h-[50vh] min-h-[400px] w-full bg-neutral-900">
-        <Image
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src={exhibition.coverImage}
           alt={title}
-          fill
-          className="object-cover opacity-80"
-          priority
-          referrerPolicy="no-referrer"
+          className="absolute inset-0 w-full h-full object-cover opacity-80"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 

@@ -40,15 +40,25 @@ const EXHIBITION_SELECT_QUERY = `
     LEFT JOIN exhibition_images ei ON ei.exhibition_id = e.id
 `;
 
-function parseExhibitionRow(row: ExhibitionRow) {
+function parseExhibitionRow(row: ExhibitionRow, mode: 'list' | 'detail' = 'list') {
+    // NOTE: 列表模式下，Base64 图片只保留类型标记，不返回完整内容
+    // 这样可将每条数据从几百KB缩短回几百字节，大幅减少传输量
+    const coverImage = row.cover_image?.startsWith('data:')
+        ? (mode === 'list' ? `/api/cover/${row.id}` : row.cover_image)
+        : (row.cover_image || '');
+
+    const images = row.image_urls ? row.image_urls.split('|||').map((url, idx) => {
+        if (url.startsWith('data:') && mode === 'list') {
+            return `/api/cover/${row.id}/image/${idx}`;
+        }
+        return url;
+    }) : [];
+
     return {
         ...row,
-        // 封面图：列表页只返回 URL 的前 100 字符用于判断，若为 Base64 则返回特殊标记
-        cover_image: row.cover_image?.startsWith('data:')
-            ? row.cover_image  // 保留完整 base64（详情页需要）
-            : row.cover_image,
+        cover_image: coverImage,
         artists: row.artist_names ? row.artist_names.split('|||') : [],
-        images: row.image_urls ? row.image_urls.split('|||') : [],
+        images,
     };
 }
 
@@ -90,7 +100,7 @@ export async function GET(req: NextRequest) {
         query += ' GROUP BY e.id ORDER BY e.start_date DESC';
 
         const [rows] = await db.execute<ExhibitionRow[]>(query, params);
-        const items = rows.map(parseExhibitionRow);
+        const items = rows.map((row) => parseExhibitionRow(row, 'list'));
 
         return NextResponse.json({ total: items.length, items }, {
             headers: {
