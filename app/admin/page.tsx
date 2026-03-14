@@ -15,7 +15,7 @@ export default function AdminExhibitions() {
     const [search, setSearch] = useState('');
 
     useEffect(() => {
-        document.title = 'Admin Dashboard | FUHUNG ART EXHIBITION';
+        document.title = 'Admin Dashboard | WORLD ART EXHIBITION';
     }, []);
 
     const loadData = async () => {

@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: Omit<Props, 'children'>): Pro
 
     if (!exhibition) {
         return {
-            title: 'Exhibition Not Found | FUHUNG ART EXHIBITION'
+            title: 'Exhibition Not Found | WORLD ART EXHIBITION'
         };
     }
 

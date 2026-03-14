@@ -9,7 +9,7 @@ export default function EditExhibition() {
     const params = useParams();
 
     useEffect(() => {
-        document.title = 'Edit Exhibition | FUHUNG ART EXHIBITION';
+        document.title = 'Edit Exhibition | WORLD ART EXHIBITION';
     }, []);
 
     const [exhibition, setExhibition] = useState<Exhibition | null>(null);

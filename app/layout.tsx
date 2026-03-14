@@ -4,8 +4,8 @@ import AppLayout from '@/components/AppLayout';
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | FUHUNG ART EXHIBITION',
-    default: 'FUHUNG ART EXHIBITION',
+    template: '%s | WORLD ART EXHIBITION',
+    default: 'WORLD ART EXHIBITION',
   },
   description: 'Discover global art exhibitions',
 };

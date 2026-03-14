@@ -22,15 +22,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true);
-    
+
     const handleOnline = () => setOffline(false);
     const handleOffline = () => setOffline(true);
-    
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-    
+
     setOffline(!navigator.onLine);
-    
+
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
@@ -56,12 +56,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         )}
         <div className="flex items-center justify-between px-4 h-14 max-w-7xl mx-auto">
           <div className="flex items-center gap-2 md:hidden">
-            <div className="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center font-serif font-bold">
-              F
-            </div>
-            <span className="font-semibold tracking-tight">FUHUNG ART EXHIBITION</span>
+            <span className="font-semibold tracking-tight">WORLD ART EXHIBITION</span>
           </div>
-          
+
           <div className="hidden md:flex flex-1 max-w-md mx-4">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
@@ -76,7 +73,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-4 ml-auto">
-            <button 
+            <button
               className="md:hidden p-2 text-neutral-600"
               onClick={() => setIsSearchOpen(!isSearchOpen)}
             >
@@ -84,7 +81,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         </div>
-        
+
         {/* Mobile Search Bar */}
         <AnimatePresence>
           {isSearchOpen && (
@@ -113,12 +110,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col fixed top-0 left-0 bottom-0 w-64 bg-white border-r border-neutral-200 z-40">
         <div className="p-6 flex items-center gap-3">
-          <div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center font-serif font-bold text-xl">
-            F
-          </div>
-          <span className="font-bold text-xl tracking-tight">FUHUNG ART EXHIBITION</span>
+          <span className="font-bold text-xl tracking-tight">WORLD ART EXHIBITION</span>
         </div>
-        
+
         <nav className="flex-1 px-4 py-6 space-y-2">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
@@ -128,8 +122,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 href={item.href}
                 className={clsx(
                   "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
-                  isActive 
-                    ? "bg-black text-white font-medium shadow-md" 
+                  isActive
+                    ? "bg-black text-white font-medium shadow-md"
                     : "text-neutral-600 hover:bg-neutral-100 hover:text-black"
                 )}
               >

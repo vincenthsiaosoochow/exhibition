@@ -31,7 +31,7 @@ export default function ExhibitionDetails() {
         setNotFound(true);
       } else {
         setExhibition(data);
-        document.title = `${data.title.zh} | ${data.title.en} | FUHUNG ART EXHIBITION`;
+        document.title = `${data.title.zh} | ${data.title.en} | WORLD ART EXHIBITION`;
       }
       setLoading(false);
     });

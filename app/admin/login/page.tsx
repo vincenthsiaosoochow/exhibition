@@ -11,7 +11,7 @@ export default function AdminLogin() {
     const router = useRouter();
 
     useEffect(() => {
-        document.title = 'Admin Login | FUHUNG ART EXHIBITION';
+        document.title = 'Admin Login | WORLD ART EXHIBITION';
     }, []);
 
     const [username, setUsername] = useState('');
