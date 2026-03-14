@@ -256,4 +256,14 @@ async function seedExhibitions(db: mysql.Pool): Promise<void> {
         await db.execute('ALTER TABLE exhibitions DROP COLUMN transport_zh');
         console.log('Dropped transport_zh column.');
     } catch { /* ignored if not exists */ }
+
+    try {
+        await db.execute('ALTER TABLE exhibitions MODIFY COLUMN cover_image MEDIUMTEXT NOT NULL');
+        console.log('Modified cover_image to MEDIUMTEXT.');
+    } catch { /* ignored */ }
+    
+    try {
+        await db.execute('ALTER TABLE exhibition_images MODIFY COLUMN image_url MEDIUMTEXT NOT NULL');
+        console.log('Modified image_url to MEDIUMTEXT.');
+    } catch { /* ignored */ }
 }

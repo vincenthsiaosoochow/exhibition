@@ -32,28 +32,11 @@ export async function POST(req: NextRequest) {
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        // 生成唯一文件名（时间戳 + 随机数）
-        const ext = file.name.split('.').pop() || 'jpg';
-        const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        // 将文件转换为 base64 string
+        const base64String = buffer.toString('base64');
+        const mimeType = file.type || 'image/jpeg';
+        const url = `data:${mimeType};base64,${base64String}`;
 
-        // 优先保存到项目内挂载目录 .data/uploads，失败则存入 /tmp/exhibition_uploads
-        let uploadDir = path.join(process.cwd(), '.data', 'uploads');
-        try {
-            if (!fs.existsSync(uploadDir)) {
-                fs.mkdirSync(uploadDir, { recursive: true });
-            }
-        } catch (e) {
-            uploadDir = '/tmp/exhibition_uploads';
-            if (!fs.existsSync(uploadDir)) {
-                fs.mkdirSync(uploadDir, { recursive: true });
-            }
-        }
-
-        const filePath = path.join(uploadDir, filename);
-        fs.writeFileSync(filePath, buffer);
-
-        // 返回通过内部 API 路由读取的统一 URL
-        const url = `/api/uploads/${filename}`;
         return NextResponse.json({ url });
     } catch (err) {
         console.error('[POST /api/upload]', err);
