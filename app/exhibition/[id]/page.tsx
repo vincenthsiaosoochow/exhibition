@@ -60,8 +60,10 @@ export default function ExhibitionDetails() {
   const address = exhibition.address[language];
   const hours = exhibition.hours[language];
   const bookingUrl = exhibition.bookingUrl;
-  const startDate = format(parseISO(exhibition.startDate), 'MMM d, yyyy');
-  const endDate = format(parseISO(exhibition.endDate), 'MMM d, yyyy');
+  
+  const dateFormat = language === 'zh' ? 'yyyy年M月d日' : 'MMM d, yyyy';
+  const startDateStr = format(parseISO(exhibition.startDate), dateFormat);
+  const endDateStr = format(parseISO(exhibition.endDate), dateFormat);
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -206,8 +208,8 @@ export default function ExhibitionDetails() {
               <div className="flex gap-4">
                 <Calendar className="w-6 h-6 text-neutral-400 shrink-0" />
                 <div>
-                  <p className="font-medium text-neutral-900">{startDate}</p>
-                  <p className="text-sm text-neutral-500">to {endDate}</p>
+                  <p className="font-medium text-neutral-900">{startDateStr}</p>
+                  <p className="text-sm text-neutral-500">{language === 'zh' ? '至' : 'to'} {endDateStr}</p>
                 </div>
               </div>
 
