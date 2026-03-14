@@ -94,9 +94,8 @@ function toExhibition(api: ApiExhibition): Exhibition {
   };
 }
 
-// NOTE: API 基础 URL 从构建时内联的环境变量读取；Next.js 会将 NEXT_PUBLIC_ 变量静态替换，
-// 所以这里直接字符串拼接，避免在客户端访问 process 对象造成运行时报错
-const API_BASE_URL: string = process.env['NEXT_PUBLIC_API_URL'] ?? '';
+// NOTE: 后端已迁移到 Next.js API Routes（同域），直接用相对路径即可
+const API_BASE_URL: string = '';
 
 export interface FetchExhibitionsParams {
   search?: string;

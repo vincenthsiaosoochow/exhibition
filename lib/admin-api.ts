@@ -1,6 +1,7 @@
 import { Exhibition, fetchExhibitions, fetchExhibitionById } from './data';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+// NOTE: 后端已迁移到 Next.js API Routes（同域），不再需要外部 URL 前缀
+const API_URL = '';
 
 export const getAdminToken = () => {
     if (typeof window !== 'undefined') {
