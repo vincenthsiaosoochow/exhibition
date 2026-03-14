@@ -11,21 +11,32 @@ async function ensureDb() {
     }
 }
 
-async function fetchExhibitionWithRelations(db: Awaited<ReturnType<typeof getDb>>, id: number) {
-    const [rows] = await db.execute<RowDataPacket[]>('SELECT * FROM exhibitions WHERE id = ?', [id]);
-    if (rows.length === 0) return null;
+interface ExhibitionRow extends RowDataPacket {
+    id: number;
+    [key: string]: unknown;
+    artist_names: string | null;
+    image_urls: string | null;
+}
 
-    const [artists] = await db.execute<RowDataPacket[]>(
-        'SELECT artist_name FROM exhibition_artists WHERE exhibition_id = ?', [id]
-    );
-    const [images] = await db.execute<RowDataPacket[]>(
-        'SELECT image_url FROM exhibition_images WHERE exhibition_id = ? ORDER BY sort_order', [id]
-    );
+/**
+ * NOTE: 使用 GROUP_CONCAT 单次 JOIN 查询替代原来分三次查询的 N+1 模式
+ */
+const EXHIBITION_BY_ID_QUERY = `
+    SELECT e.*,
+           GROUP_CONCAT(DISTINCT ea.artist_name ORDER BY ea.artist_name SEPARATOR '|||') AS artist_names,
+           GROUP_CONCAT(ei.image_url ORDER BY ei.sort_order SEPARATOR '|||') AS image_urls
+    FROM exhibitions e
+    LEFT JOIN exhibition_artists ea ON ea.exhibition_id = e.id
+    LEFT JOIN exhibition_images ei ON ei.exhibition_id = e.id
+    WHERE e.id = ?
+    GROUP BY e.id
+`;
 
+function parseRow(row: ExhibitionRow) {
     return {
-        ...rows[0],
-        artists: artists.map((a) => a.artist_name as string),
-        images: images.map((i) => i.image_url as string),
+        ...row,
+        artists: row.artist_names ? String(row.artist_names).split('|||') : [],
+        images: row.image_urls ? String(row.image_urls).split('|||') : [],
     };
 }
 
@@ -46,13 +57,13 @@ export async function GET(
         }
 
         const db = getDb();
-        const exhibition = await fetchExhibitionWithRelations(db, exhibitionId);
+        const [rows] = await db.execute<ExhibitionRow[]>(EXHIBITION_BY_ID_QUERY, [exhibitionId]);
 
-        if (!exhibition) {
+        if (rows.length === 0) {
             return NextResponse.json({ detail: '展览不存在' }, { status: 404 });
         }
 
-        return NextResponse.json(exhibition);
+        return NextResponse.json(parseRow(rows[0]));
     } catch (err) {
         console.error('[GET /api/exhibitions/[id]]', err);
         return NextResponse.json({ detail: '服务器内部错误' }, { status: 500 });
@@ -82,7 +93,6 @@ export async function PUT(
         const body = await req.json();
         const { artists, images, ...data } = body;
 
-        // 构造动态更新语句（只更新传入的非空字段）
         const updateFields: string[] = [];
         const updateValues: (string | number)[] = [];
 
@@ -107,7 +117,6 @@ export async function PUT(
             );
         }
 
-        // 全量替换艺术家和图片（如果传入的话）
         if (artists !== undefined) {
             await db.execute('DELETE FROM exhibition_artists WHERE exhibition_id = ?', [exhibitionId]);
             for (const name of artists as string[]) {
@@ -122,12 +131,12 @@ export async function PUT(
             }
         }
 
-        const exhibition = await fetchExhibitionWithRelations(db, exhibitionId);
-        if (!exhibition) {
+        const [rows] = await db.execute<ExhibitionRow[]>(EXHIBITION_BY_ID_QUERY, [exhibitionId]);
+        if (rows.length === 0) {
             return NextResponse.json({ detail: '展览不存在' }, { status: 404 });
         }
 
-        return NextResponse.json(exhibition);
+        return NextResponse.json(parseRow(rows[0]));
     } catch (err) {
         console.error('[PUT /api/exhibitions/[id]]', err);
         return NextResponse.json({ detail: err instanceof Error ? err.message : String(err) }, { status: 500 });

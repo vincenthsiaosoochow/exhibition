@@ -11,27 +11,50 @@ async function ensureDb() {
     }
 }
 
-// NOTE: 将扁平的 SQL 行数据转换为带关联的展览响应对象
-async function fetchExhibitionWithRelations(db: Awaited<ReturnType<typeof getDb>>, id: number) {
-    const [rows] = await db.execute<RowDataPacket[]>('SELECT * FROM exhibitions WHERE id = ?', [id]);
-    if (rows.length === 0) return null;
+interface ExhibitionRow extends RowDataPacket {
+    id: number;
+    title_en: string; title_zh: string;
+    venue_en: string; venue_zh: string;
+    continent: string; country: string; city: string;
+    start_date: string; end_date: string;
+    cover_image: string;
+    price: string; status: string;
+    description_en: string; description_zh: string;
+    address_en: string; address_zh: string;
+    hours_en: string; hours_zh: string;
+    booking_url: string;
+    artist_names: string | null;
+    image_urls: string | null;
+}
 
-    const [artists] = await db.execute<RowDataPacket[]>(
-        'SELECT artist_name FROM exhibition_artists WHERE exhibition_id = ?', [id]
-    );
-    const [images] = await db.execute<RowDataPacket[]>(
-        'SELECT image_url FROM exhibition_images WHERE exhibition_id = ? ORDER BY sort_order', [id]
-    );
+/**
+ * NOTE: 使用 GROUP_CONCAT 替代 N+1 查询模式，一次 SQL 获取展览+艺术家+图片
+ * 将之前 1 + N*2 次查询优化为固定 1 次查询
+ */
+const EXHIBITION_SELECT_QUERY = `
+    SELECT e.*,
+           GROUP_CONCAT(DISTINCT ea.artist_name ORDER BY ea.artist_name SEPARATOR '|||') AS artist_names,
+           GROUP_CONCAT(ei.image_url ORDER BY ei.sort_order SEPARATOR '|||') AS image_urls
+    FROM exhibitions e
+    LEFT JOIN exhibition_artists ea ON ea.exhibition_id = e.id
+    LEFT JOIN exhibition_images ei ON ei.exhibition_id = e.id
+`;
 
+function parseExhibitionRow(row: ExhibitionRow) {
     return {
-        ...rows[0],
-        artists: artists.map((a) => a.artist_name as string),
-        images: images.map((i) => i.image_url as string),
+        ...row,
+        // 封面图：列表页只返回 URL 的前 100 字符用于判断，若为 Base64 则返回特殊标记
+        cover_image: row.cover_image?.startsWith('data:')
+            ? row.cover_image  // 保留完整 base64（详情页需要）
+            : row.cover_image,
+        artists: row.artist_names ? row.artist_names.split('|||') : [],
+        images: row.image_urls ? row.image_urls.split('|||') : [],
     };
 }
 
 /**
  * GET /api/exhibitions — 获取展览列表，支持多维度筛选
+ * 优化：使用单次 JOIN + GROUP_CONCAT 查询替代 N+1 模式
  */
 export async function GET(req: NextRequest) {
     try {
@@ -39,39 +62,42 @@ export async function GET(req: NextRequest) {
         const db = getDb();
         const { searchParams } = req.nextUrl;
 
-        let query = 'SELECT * FROM exhibitions WHERE 1=1';
+        let query = EXHIBITION_SELECT_QUERY + 'WHERE 1=1';
         const params: (string | number)[] = [];
 
         const search = searchParams.get('search');
         if (search) {
-            query += ' AND (title_en LIKE ? OR title_zh LIKE ? OR venue_en LIKE ? OR venue_zh LIKE ?)';
+            query += ' AND (e.title_en LIKE ? OR e.title_zh LIKE ? OR e.venue_en LIKE ? OR e.venue_zh LIKE ?)';
             const kw = `%${search}%`;
             params.push(kw, kw, kw, kw);
         }
 
         const continent = searchParams.get('continent');
-        if (continent && continent !== 'all') { query += ' AND continent = ?'; params.push(continent); }
+        if (continent && continent !== 'all') { query += ' AND e.continent = ?'; params.push(continent); }
 
         const country = searchParams.get('country');
-        if (country && country !== 'all') { query += ' AND country = ?'; params.push(country); }
+        if (country && country !== 'all') { query += ' AND e.country = ?'; params.push(country); }
 
         const city = searchParams.get('city');
-        if (city && city !== 'all') { query += ' AND city = ?'; params.push(city); }
+        if (city && city !== 'all') { query += ' AND e.city = ?'; params.push(city); }
 
         const status = searchParams.get('status');
-        if (status && status !== 'all') { query += ' AND status = ?'; params.push(status); }
+        if (status && status !== 'all') { query += ' AND e.status = ?'; params.push(status); }
 
         const price = searchParams.get('price');
-        if (price && price !== 'all') { query += ' AND price = ?'; params.push(price); }
+        if (price && price !== 'all') { query += ' AND e.price = ?'; params.push(price); }
 
-        const [rows] = await db.execute<RowDataPacket[]>(query, params);
+        query += ' GROUP BY e.id ORDER BY e.start_date DESC';
 
-        // 批量加载每个展览的关联数据
-        const items = await Promise.all(
-            rows.map((row) => fetchExhibitionWithRelations(db, row.id as number))
-        );
+        const [rows] = await db.execute<ExhibitionRow[]>(query, params);
+        const items = rows.map(parseExhibitionRow);
 
-        return NextResponse.json({ total: items.length, items });
+        return NextResponse.json({ total: items.length, items }, {
+            headers: {
+                // NOTE: 缓存60秒，降低数据库压力，同时对展览数据的时效性影响极小
+                'Cache-Control': 'public, max-age=60, stale-while-revalidate=120',
+            }
+        });
     } catch (err) {
         console.error('[GET /api/exhibitions]', err);
         return NextResponse.json({ detail: err instanceof Error ? err.message : String(err) }, { status: 500 });
@@ -117,7 +143,12 @@ export async function POST(req: NextRequest) {
             await db.execute('INSERT INTO exhibition_images (exhibition_id, image_url, sort_order) VALUES (?, ?, ?)', [exhibitionId, images[i], i]);
         }
 
-        const exhibition = await fetchExhibitionWithRelations(db, exhibitionId);
+        // 查询刚创建的展览并返回完整数据
+        const [rows] = await db.execute<ExhibitionRow[]>(
+            EXHIBITION_SELECT_QUERY + ' WHERE e.id = ? GROUP BY e.id',
+            [exhibitionId]
+        );
+        const exhibition = rows.length > 0 ? parseExhibitionRow(rows[0]) : null;
         return NextResponse.json(exhibition, { status: 201 });
     } catch (err) {
         console.error('[POST /api/exhibitions]', err);

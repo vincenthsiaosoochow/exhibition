@@ -121,7 +121,10 @@ export async function fetchExhibitions(params?: FetchExhibitionsParams): Promise
 
     const baseUrl = getBaseUrl();
     const url = `${baseUrl}/api/exhibitions${query.toString() ? `?${query}` : ''}`;
-    const res = await fetch(url, { cache: 'no-store' });
+    const res = await fetch(url, {
+        // NOTE: 60秒后重新验证，既能减轻数据库压力，又保证数据在1分钟内刷新
+        next: { revalidate: 60 },
+    });
 
     if (!res.ok) throw new Error(`API error: ${res.status}`);
 
@@ -139,7 +142,10 @@ export async function fetchExhibitions(params?: FetchExhibitionsParams): Promise
 export async function fetchExhibitionById(id: string): Promise<Exhibition | undefined> {
   try {
     const baseUrl = getBaseUrl();
-    const res = await fetch(`${baseUrl}/api/exhibitions/${id}`, { cache: 'no-store' });
+    const res = await fetch(`${baseUrl}/api/exhibitions/${id}`, {
+        // NOTE: 展览详情 30 秒刷新一次缓存
+        next: { revalidate: 30 },
+    });
     if (res.status === 404) return undefined;
     if (!res.ok) throw new Error(`API error: ${res.status}`);
 
