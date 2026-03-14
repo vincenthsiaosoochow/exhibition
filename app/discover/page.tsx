@@ -67,7 +67,7 @@ export default function Discover() {
       if (selectedPrice !== 'all' && ex.price !== selectedPrice) return false;
 
       return true;
-    });
+    }).sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
   }, [allExhibitions, searchQuery, selectedRegion, selectedCountry, selectedCity, selectedStatus, selectedPrice, language]);
 
   // Reset page when filters change
