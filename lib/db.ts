@@ -240,4 +240,20 @@ async function seedExhibitions(db: mysql.Pool): Promise<void> {
     }
 
     console.log(`[DB] 已写入 ${seedData.length} 条示例展览数据`);
+
+    // --- 自动数据库迁移 ---
+    try {
+        await db.execute('ALTER TABLE exhibitions ADD COLUMN booking_url VARCHAR(500) NOT NULL DEFAULT ""');
+        console.log('Added booking_url column.');
+    } catch { /* ignored if already exists */ }
+    
+    try {
+        await db.execute('ALTER TABLE exhibitions DROP COLUMN transport_en');
+        console.log('Dropped transport_en column.');
+    } catch { /* ignored if not exists */ }
+
+    try {
+        await db.execute('ALTER TABLE exhibitions DROP COLUMN transport_zh');
+        console.log('Dropped transport_zh column.');
+    } catch { /* ignored if not exists */ }
 }
