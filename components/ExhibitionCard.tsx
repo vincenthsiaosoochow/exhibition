@@ -22,8 +22,9 @@ export default function ExhibitionCard({ exhibition }: { exhibition: Exhibition 
   const title = exhibition.title[language];
   const venue = exhibition.venue[language];
   const city = exhibition.location.city;
-  const startDate = format(parseISO(exhibition.startDate), 'MMM d, yyyy');
-  const endDate = format(parseISO(exhibition.endDate), 'MMM d, yyyy');
+  const dateFormat = language === 'zh' ? 'yyyy年M月d日' : 'MMM d, yyyy';
+  const startDate = format(parseISO(exhibition.startDate), dateFormat);
+  const endDate = format(parseISO(exhibition.endDate), dateFormat);
 
   return (
     <Link href={`/exhibition/${exhibition.id}`} className="group block">
@@ -70,7 +71,7 @@ export default function ExhibitionCard({ exhibition }: { exhibition: Exhibition 
             </div>
             <div className="flex items-center gap-1.5">
               <Calendar className="w-4 h-4 shrink-0" />
-              <span>{startDate} - {endDate}</span>
+              <span>{startDate} {language === 'zh' ? '至' : '-'} {endDate}</span>
             </div>
           </div>
         </div>

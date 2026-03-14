@@ -35,6 +35,10 @@ export default function Discover() {
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedPrice, setSelectedPrice] = useState<string>('all');
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
   const filteredExhibitions = useMemo(() => {
     return allExhibitions.filter((ex) => {
       // Search
@@ -65,6 +69,17 @@ export default function Discover() {
       return true;
     });
   }, [allExhibitions, searchQuery, selectedRegion, selectedCountry, selectedCity, selectedStatus, selectedPrice, language]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedRegion, selectedCountry, selectedCity, selectedStatus, selectedPrice, language]);
+
+  const totalPages = Math.ceil(filteredExhibitions.length / ITEMS_PER_PAGE);
+  const paginatedExhibitions = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredExhibitions.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredExhibitions, currentPage]);
 
   const regions = ['all', 'Europe', 'Asia', 'North America', 'Africa'];
 
@@ -248,12 +263,36 @@ export default function Discover() {
               </div>
             ))}
           </div>
-        ) : filteredExhibitions.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredExhibitions.map((exhibition) => (
-              <ExhibitionCard key={exhibition.id} exhibition={exhibition} />
-            ))}
-          </div>
+        ) : paginatedExhibitions.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedExhibitions.map((exhibition) => (
+                <ExhibitionCard key={exhibition.id} exhibition={exhibition} />
+              ))}
+            </div>
+            
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-4 mt-12 pb-8">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 rounded-full border border-neutral-200 hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm transition-colors"
+                >
+                  {language === 'zh' ? '上一页' : 'Previous'}
+                </button>
+                <div className="text-sm font-medium text-neutral-600">
+                  {language === 'zh' ? `第 ${currentPage} / ${totalPages} 页` : `Page ${currentPage} of ${totalPages}`}
+                </div>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 rounded-full border border-neutral-200 hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm transition-colors"
+                >
+                  {language === 'zh' ? '下一页' : 'Next'}
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-center text-neutral-500 py-20 bg-white rounded-3xl border border-neutral-100">
             {t('common.noResults')}
