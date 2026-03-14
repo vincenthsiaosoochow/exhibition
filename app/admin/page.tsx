@@ -49,7 +49,7 @@ export default function AdminExhibitions() {
         if (!search) return true;
         const q = search.toLowerCase();
         return ex.title.zh.toLowerCase().includes(q) || ex.title.en.toLowerCase().includes(q) || ex.venue.zh.toLowerCase().includes(q);
-    });
+    }).sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
 
     return (
         <div>
