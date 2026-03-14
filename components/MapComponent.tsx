@@ -16,7 +16,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-const cityCoordinates: Record<string, [number, number]> = {
+const INITIAL_COORDS: Record<string, [number, number]> = {
   'Paris': [48.8566, 2.3522],
   'London': [51.5074, -0.1278],
   'Cape Town': [-33.9249, 18.4241],
@@ -24,12 +24,49 @@ const cityCoordinates: Record<string, [number, number]> = {
   'Taipei': [25.0330, 121.5654],
 };
 
+const geocodeCity = async (city: string): Promise<[number, number] | null> => {
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}`);
+    const data = await res.json();
+    if (data && data.length > 0) {
+      return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+    }
+  } catch (error) {
+    console.error('Failed to geocode city:', city, error);
+  }
+  return null;
+};
+
 export default function MapComponent() {
   const { t, language } = useTranslation();
   const [exhibitions, setExhibitions] = useState<Exhibition[]>([]);
+  const [coordsMap, setCoordsMap] = useState<Record<string, [number, number]>>(INITIAL_COORDS);
 
   useEffect(() => {
-    fetchExhibitions().then(setExhibitions);
+    fetchExhibitions().then(async (data) => {
+      setExhibitions(data);
+      
+      // 动态解析未知城市的坐标
+      const newCoords = { ...INITIAL_COORDS };
+      let hasNewCoords = false;
+      const uniqueCities = Array.from(new Set(data.map((e) => e.location.city)));
+      
+      for (const city of uniqueCities) {
+        if (!newCoords[city]) {
+          const coords = await geocodeCity(city);
+          if (coords) {
+            newCoords[city] = coords;
+            hasNewCoords = true;
+          }
+          // 延迟遵守 OSM Nominatim 的速率限制
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      }
+      
+      if (hasNewCoords) {
+        setCoordsMap(newCoords);
+      }
+    });
   }, []);
 
   return (
@@ -45,7 +82,7 @@ export default function MapComponent() {
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
         {exhibitions.map((ex) => {
-          const coords = cityCoordinates[ex.location.city];
+          const coords = coordsMap[ex.location.city];
           if (!coords) return null;
 
           return (
