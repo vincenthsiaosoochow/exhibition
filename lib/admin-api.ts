@@ -65,21 +65,27 @@ export const adminLogin = async (username: string, password: string) => {
     return data;
 };
 
-export const createExhibition = async (data: any) => {
+export const createExhibition = async (data: unknown) => {
     const res = await adminFetch('/api/exhibitions', {
         method: 'POST',
         body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Failed to create exhibition');
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: 'Unknown error' }));
+        throw new Error(err.detail || `HTTP ${res.status}`);
+    }
     return res.json();
 };
 
-export const updateExhibition = async (id: number | string, data: any) => {
+export const updateExhibition = async (id: number | string, data: unknown) => {
     const res = await adminFetch(`/api/exhibitions/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Failed to update exhibition');
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: 'Unknown error' }));
+        throw new Error(err.detail || `HTTP ${res.status}`);
+    }
     return res.json();
 };
 
@@ -87,6 +93,9 @@ export const deleteExhibition = async (id: number | string) => {
     const res = await adminFetch(`/api/exhibitions/${id}`, {
         method: 'DELETE',
     });
-    if (!res.ok) throw new Error('Failed to delete exhibition');
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: 'Unknown error' }));
+        throw new Error(err.detail || `HTTP ${res.status}`);
+    }
     return true;
 };

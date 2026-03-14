@@ -149,7 +149,8 @@ export default function AdminExhibitionForm({ initialData, isEdit }: AdminExhibi
             router.push('/admin');
             router.refresh();
         } catch (err) {
-            alert(isEdit ? '更新失败，请重试' : '创建失败，请重试');
+            const msg = err instanceof Error ? err.message : '未知错误';
+            alert(`${isEdit ? '更新' : '创建'}失败：${msg}`);
         } finally {
             setLoading(false);
         }
