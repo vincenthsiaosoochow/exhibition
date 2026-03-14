@@ -129,7 +129,7 @@ async function seedAdmin(db: mysql.Pool): Promise<void> {
     if (rows.length === 0) {
         const hashed = await bcrypt.hash(adminPassword, 10);
         await db.execute(
-            'INSERT INTO admins (username, hashed_password) VALUES (?, ?)',
+            'INSERT INTO admins (username, hashed_password, is_active) VALUES (?, ?, 1)',
             [adminUsername, hashed]
         );
         console.log(`[DB] 已创建管理员账号: ${adminUsername}`);
