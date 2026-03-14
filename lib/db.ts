@@ -112,6 +112,32 @@ export async function initDb(): Promise<void> {
     // 初始化管理员账号（幂等操作）
     await seedAdmin(db);
 
+    // 自动数据库迁移（优先执行，保证后续操作字段正确）
+    try {
+        await db.execute('ALTER TABLE exhibitions ADD COLUMN booking_url VARCHAR(500) NOT NULL DEFAULT ""');
+        console.log('Added booking_url column.');
+    } catch { /* ignored if already exists */ }
+    
+    try {
+        await db.execute('ALTER TABLE exhibitions DROP COLUMN transport_en');
+        console.log('Dropped transport_en column.');
+    } catch { /* ignored if not exists */ }
+
+    try {
+        await db.execute('ALTER TABLE exhibitions DROP COLUMN transport_zh');
+        console.log('Dropped transport_zh column.');
+    } catch { /* ignored if not exists */ }
+
+    try {
+        await db.execute('ALTER TABLE exhibitions MODIFY COLUMN cover_image MEDIUMTEXT NOT NULL');
+        console.log('Modified cover_image to MEDIUMTEXT.');
+    } catch { /* ignored */ }
+    
+    try {
+        await db.execute('ALTER TABLE exhibition_images MODIFY COLUMN image_url MEDIUMTEXT NOT NULL');
+        console.log('Modified image_url to MEDIUMTEXT.');
+    } catch { /* ignored */ }
+
     // 初始化示例展览数据（如果为空）
     await seedExhibitions(db);
 }
@@ -240,30 +266,4 @@ async function seedExhibitions(db: mysql.Pool): Promise<void> {
     }
 
     console.log(`[DB] 已写入 ${seedData.length} 条示例展览数据`);
-
-    // --- 自动数据库迁移 ---
-    try {
-        await db.execute('ALTER TABLE exhibitions ADD COLUMN booking_url VARCHAR(500) NOT NULL DEFAULT ""');
-        console.log('Added booking_url column.');
-    } catch { /* ignored if already exists */ }
-    
-    try {
-        await db.execute('ALTER TABLE exhibitions DROP COLUMN transport_en');
-        console.log('Dropped transport_en column.');
-    } catch { /* ignored if not exists */ }
-
-    try {
-        await db.execute('ALTER TABLE exhibitions DROP COLUMN transport_zh');
-        console.log('Dropped transport_zh column.');
-    } catch { /* ignored if not exists */ }
-
-    try {
-        await db.execute('ALTER TABLE exhibitions MODIFY COLUMN cover_image MEDIUMTEXT NOT NULL');
-        console.log('Modified cover_image to MEDIUMTEXT.');
-    } catch { /* ignored */ }
-    
-    try {
-        await db.execute('ALTER TABLE exhibition_images MODIFY COLUMN image_url MEDIUMTEXT NOT NULL');
-        console.log('Modified image_url to MEDIUMTEXT.');
-    } catch { /* ignored */ }
 }
