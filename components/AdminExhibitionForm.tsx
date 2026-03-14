@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { createExhibition, updateExhibition } from '@/lib/admin-api';
+import { createExhibition, updateExhibition, getAdminToken } from '@/lib/admin-api';
 import { Exhibition } from '@/lib/data';
-import { ArrowLeft, Save, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Upload, Image as ImageIcon, Info } from 'lucide-react';
 import Link from 'next/link';
 
 interface AdminExhibitionFormProps {
@@ -12,15 +12,34 @@ interface AdminExhibitionFormProps {
     isEdit?: boolean;
 }
 
+/**
+ * 根据开始日期和结束日期自动计算展览状态
+ * - longTerm：展期超过 365 天
+ * - ending：距离结束日期不足 30 天
+ * - recent：其他
+ */
+function calcStatus(startDate: string, endDate: string): 'recent' | 'ending' | 'longTerm' {
+    if (!startDate || !endDate) return 'recent';
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const now = new Date();
+    const durationDays = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+    const daysLeft = (end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+    if (durationDays > 365) return 'longTerm';
+    if (daysLeft <= 30) return 'ending';
+    return 'recent';
+}
+
 export default function AdminExhibitionForm({ initialData, isEdit }: AdminExhibitionFormProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [uploadingCover, setUploadingCover] = useState(false);
+    const [uploadingImage, setUploadingImage] = useState<number | null>(null);
+    const coverInputRef = useRef<HTMLInputElement>(null);
 
-    // 初始化扁平数据，适配后端 API 结构
     const [formData, setFormData] = useState({
-        title_en: initialData?.title?.en || '',
+        // NOTE: 中文字段为主要输入，提交时自动将中文值复制给英文字段（API 兼容性）
         title_zh: initialData?.title?.zh || '',
-        venue_en: initialData?.venue?.en || '',
         venue_zh: initialData?.venue?.zh || '',
         continent: initialData?.location?.continent || 'Europe',
         country: initialData?.location?.country || '',
@@ -29,55 +48,116 @@ export default function AdminExhibitionForm({ initialData, isEdit }: AdminExhibi
         end_date: initialData?.endDate || '',
         cover_image: initialData?.coverImage || '',
         price: initialData?.price || 'paid',
-        status: initialData?.status || 'recent',
-        description_en: initialData?.description?.en || '',
         description_zh: initialData?.description?.zh || '',
-        address_en: initialData?.address?.en || '',
         address_zh: initialData?.address?.zh || '',
-        hours_en: initialData?.hours?.en || '',
         hours_zh: initialData?.hours?.zh || '',
-        transport_en: initialData?.transport?.en || '',
         transport_zh: initialData?.transport?.zh || '',
-        artists: initialData?.artists || [],
-        images: initialData?.images || []
+        artists: initialData?.artists || [] as string[],
+        images: initialData?.images || [] as string[],
     });
 
-    const handleChange = (field: string, value: any) => {
+    const handleChange = (field: string, value: string | string[]) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleArrayChange = (field: 'artists' | 'images', index: number, value: string) => {
-        const newArray = [...formData[field]];
-        newArray[index] = value;
-        handleChange(field, newArray);
+    // 上传图片通用函数：发送到 /api/upload，返回 URL
+    const uploadFile = async (file: File): Promise<string> => {
+        const token = getAdminToken();
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: fd,
+        });
+        if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.detail || '上传失败');
+        }
+        const data = await res.json();
+        return data.url as string;
     };
 
-    const addArrayItem = (field: 'artists' | 'images') => {
-        handleChange(field, [...formData[field], '']);
+    // 封面图上传
+    const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUploadingCover(true);
+        try {
+            const url = await uploadFile(file);
+            handleChange('cover_image', url);
+        } catch (err) {
+            alert(err instanceof Error ? err.message : '封面上传失败');
+        } finally {
+            setUploadingCover(false);
+        }
     };
 
-    const removeArrayItem = (field: 'artists' | 'images', index: number) => {
-        const newArray = formData[field].filter((_, i) => i !== index);
-        handleChange(field, newArray);
+    // 展览图片上传（指定位置插入）
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUploadingImage(index);
+        try {
+            const url = await uploadFile(file);
+            const newImages = [...formData.images];
+            if (index < newImages.length) {
+                newImages[index] = url;
+            } else {
+                newImages.push(url);
+            }
+            handleChange('images', newImages);
+        } catch (err) {
+            alert(err instanceof Error ? err.message : '图片上传失败');
+        } finally {
+            setUploadingImage(null);
+        }
+    };
+
+    const addImage = () => {
+        handleChange('images', [...formData.images, '']);
+    };
+
+    const removeImage = (index: number) => {
+        handleChange('images', formData.images.filter((_, i) => i !== index));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         try {
+            // 自动计算状态，不需要手动选择
+            const autoStatus = calcStatus(formData.start_date, formData.end_date);
+
+            // NOTE: 后端仍需要英文字段，这里用中文值填充以确保兼容性
+            const payload = {
+                ...formData,
+                status: autoStatus,
+                title_en: formData.title_zh,
+                venue_en: formData.venue_zh,
+                description_en: formData.description_zh,
+                address_en: formData.address_zh,
+                hours_en: formData.hours_zh,
+                transport_en: formData.transport_zh,
+            };
+
             if (isEdit && initialData) {
-                await updateExhibition(initialData.id, formData);
+                await updateExhibition(initialData.id, payload);
             } else {
-                await createExhibition(formData);
+                await createExhibition(payload);
             }
             router.push('/admin');
             router.refresh();
         } catch (err) {
-            alert(isEdit ? '更新失败' : '创建失败');
+            alert(isEdit ? '更新失败，请重试' : '创建失败，请重试');
         } finally {
             setLoading(false);
         }
     };
+
+    // 实时计算当前预计状态（仅用于展示）
+    const previewStatus = calcStatus(formData.start_date, formData.end_date);
+    const statusLabels = { recent: '即将开幕 / 进行中', ending: '即将结束（30天内）', longTerm: '长期展览（超过1年）' };
 
     return (
         <form onSubmit={handleSubmit} className="max-w-4xl space-y-8 pb-20">
@@ -105,43 +185,59 @@ export default function AdminExhibitionForm({ initialData, isEdit }: AdminExhibi
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">中文标题 *</label>
-                            <input type="text" required value={formData.title_zh} onChange={e => handleChange('title_zh', e.target.value)} className="w-full p-3 border border-neutral-200 rounded-xl" />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">英文标题 *</label>
-                            <input type="text" required value={formData.title_en} onChange={e => handleChange('title_en', e.target.value)} className="w-full p-3 border border-neutral-200 rounded-xl" />
+                            <label className="text-sm font-medium">展览标题 *</label>
+                            <input type="text" required value={formData.title_zh} onChange={e => handleChange('title_zh', e.target.value)} placeholder="请输入展览名称" className="w-full p-3 border border-neutral-200 rounded-xl" />
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">中文描述 *</label>
-                            <textarea required rows={4} value={formData.description_zh} onChange={e => handleChange('description_zh', e.target.value)} className="w-full p-3 border border-neutral-200 rounded-xl" />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">英文描述 *</label>
-                            <textarea required rows={4} value={formData.description_en} onChange={e => handleChange('description_en', e.target.value)} className="w-full p-3 border border-neutral-200 rounded-xl" />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">封面图 URL *</label>
-                            <input type="url" required value={formData.cover_image} onChange={e => handleChange('cover_image', e.target.value)} className="w-full p-3 border border-neutral-200 rounded-xl" />
+                            <label className="text-sm font-medium">门票</label>
+                            <select value={formData.price} onChange={e => handleChange('price', e.target.value)} className="w-full p-3 border border-neutral-200 rounded-xl bg-white">
+                                <option value="paid">收费</option>
+                                <option value="free">免费</option>
+                            </select>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">状态 *</label>
-                                <select value={formData.status} onChange={e => handleChange('status', e.target.value)} className="w-full p-3 border border-neutral-200 rounded-xl bg-white">
-                                    <option value="recent">Recent (近期)</option>
-                                    <option value="ending">Ending Soon (即将结束)</option>
-                                    <option value="longTerm">Long Term (长期)</option>
-                                </select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">门票 *</label>
-                                <select value={formData.price} onChange={e => handleChange('price', e.target.value)} className="w-full p-3 border border-neutral-200 rounded-xl bg-white">
-                                    <option value="paid">Paid (收费)</option>
-                                    <option value="free">Free (免费)</option>
-                                </select>
+                        <div className="md:col-span-2 space-y-2">
+                            <label className="text-sm font-medium">展览简介</label>
+                            <textarea rows={4} value={formData.description_zh} onChange={e => handleChange('description_zh', e.target.value)} placeholder="请输入展览描述" className="w-full p-3 border border-neutral-200 rounded-xl resize-none" />
+                        </div>
+
+                        {/* 封面图上传 */}
+                        <div className="md:col-span-2 space-y-2">
+                            <label className="text-sm font-medium">封面图片 *</label>
+                            <div className="flex gap-4 items-start">
+                                {/* 预览 */}
+                                {formData.cover_image ? (
+                                    <div className="relative w-40 h-28 rounded-xl overflow-hidden border border-neutral-200 shrink-0">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={formData.cover_image} alt="封面预览" className="w-full h-full object-cover" />
+                                    </div>
+                                ) : (
+                                    <div className="w-40 h-28 rounded-xl border-2 border-dashed border-neutral-200 flex items-center justify-center shrink-0">
+                                        <ImageIcon className="w-8 h-8 text-neutral-300" />
+                                    </div>
+                                )}
+                                <div className="flex-1 space-y-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => coverInputRef.current?.click()}
+                                        disabled={uploadingCover}
+                                        className="flex items-center gap-2 px-4 py-2.5 border border-neutral-300 rounded-xl text-sm font-medium hover:bg-neutral-50 disabled:opacity-50 transition-colors"
+                                    >
+                                        <Upload className="w-4 h-4" />
+                                        {uploadingCover ? '上传中...' : '点击上传图片'}
+                                    </button>
+                                    <input ref={coverInputRef} type="file" accept="image/*" onChange={handleCoverUpload} className="hidden" />
+                                    <p className="text-xs text-neutral-400">支持 JPG、PNG、WebP，最大 5MB</p>
+                                    {/* 也支持直接粘贴 URL */}
+                                    <input
+                                        type="text"
+                                        value={formData.cover_image}
+                                        onChange={e => handleChange('cover_image', e.target.value)}
+                                        placeholder="或直接输入图片 URL"
+                                        className="w-full p-2.5 border border-neutral-200 rounded-xl text-sm"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -150,127 +246,133 @@ export default function AdminExhibitionForm({ initialData, isEdit }: AdminExhibi
                 {/* 场馆与位置 */}
                 <section className="space-y-6 bg-white p-6 rounded-2xl border border-neutral-200">
                     <h2 className="text-lg font-bold border-b border-neutral-100 pb-3">场馆与位置</h2>
-
                     <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">中文场馆 *</label>
-                                <input type="text" required value={formData.venue_zh} onChange={e => handleChange('venue_zh', e.target.value)} className="w-full p-3 border border-neutral-200 rounded-xl" />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">英文场馆 *</label>
-                                <input type="text" required value={formData.venue_en} onChange={e => handleChange('venue_en', e.target.value)} className="w-full p-3 border border-neutral-200 rounded-xl" />
-                            </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">场馆名称 *</label>
+                            <input type="text" required value={formData.venue_zh} onChange={e => handleChange('venue_zh', e.target.value)} placeholder="如：上海当代艺术博物馆" className="w-full p-3 border border-neutral-200 rounded-xl" />
                         </div>
-
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-3 gap-3">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">大洲 *</label>
-                                <select value={formData.continent} onChange={e => handleChange('continent', e.target.value)} className="w-full p-3 border border-neutral-200 rounded-xl bg-white">
-                                    <option value="Europe">Europe</option>
-                                    <option value="Asia">Asia</option>
-                                    <option value="North America">North America</option>
-                                    <option value="Africa">Africa</option>
-                                    <option value="South America">South America</option>
-                                    <option value="Oceania">Oceania</option>
+                                <select value={formData.continent} onChange={e => handleChange('continent', e.target.value)} className="w-full p-3 border border-neutral-200 rounded-xl bg-white text-sm">
+                                    <option value="Asia">亚洲</option>
+                                    <option value="Europe">欧洲</option>
+                                    <option value="North America">北美洲</option>
+                                    <option value="South America">南美洲</option>
+                                    <option value="Africa">非洲</option>
+                                    <option value="Oceania">大洋洲</option>
                                 </select>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">国家 *</label>
-                                <input type="text" required value={formData.country} onChange={e => handleChange('country', e.target.value)} className="w-full p-3 border border-neutral-200 rounded-xl" />
+                                <input type="text" required value={formData.country} onChange={e => handleChange('country', e.target.value)} placeholder="如：中国" className="w-full p-3 border border-neutral-200 rounded-xl" />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">城市 *</label>
-                                <input type="text" required value={formData.city} onChange={e => handleChange('city', e.target.value)} className="w-full p-3 border border-neutral-200 rounded-xl" />
+                                <input type="text" required value={formData.city} onChange={e => handleChange('city', e.target.value)} placeholder="如：上海" className="w-full p-3 border border-neutral-200 rounded-xl" />
                             </div>
                         </div>
-
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">中文地址 *</label>
-                            <input type="text" required value={formData.address_zh} onChange={e => handleChange('address_zh', e.target.value)} className="w-full p-3 border border-neutral-200 rounded-xl" />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">英文地址 *</label>
-                            <input type="text" required value={formData.address_en} onChange={e => handleChange('address_en', e.target.value)} className="w-full p-3 border border-neutral-200 rounded-xl" />
+                            <label className="text-sm font-medium">详细地址</label>
+                            <input type="text" value={formData.address_zh} onChange={e => handleChange('address_zh', e.target.value)} placeholder="如：上海市黄浦区花园港路200号" className="w-full p-3 border border-neutral-200 rounded-xl" />
                         </div>
                     </div>
                 </section>
 
-                {/* 实用信息 */}
+                {/* 时间与实用信息 */}
                 <section className="space-y-6 bg-white p-6 rounded-2xl border border-neutral-200">
-                    <h2 className="text-lg font-bold border-b border-neutral-100 pb-3">实用信息</h2>
-
+                    <h2 className="text-lg font-bold border-b border-neutral-100 pb-3">时间与实用信息</h2>
                     <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">开始日期 *</label>
+                                <label className="text-sm font-medium">开幕日期 *</label>
                                 <input type="date" required value={formData.start_date} onChange={e => handleChange('start_date', e.target.value)} className="w-full p-3 border border-neutral-200 rounded-xl" />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">结束日期 *</label>
+                                <label className="text-sm font-medium">闭幕日期 *</label>
                                 <input type="date" required value={formData.end_date} onChange={e => handleChange('end_date', e.target.value)} className="w-full p-3 border border-neutral-200 rounded-xl" />
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">中文开放时间 *</label>
-                            <input type="text" required value={formData.hours_zh} onChange={e => handleChange('hours_zh', e.target.value)} className="w-full p-3 border border-neutral-200 rounded-xl" />
-                        </div>
+                        {/* 状态自动计算提示 */}
+                        {formData.start_date && formData.end_date && (
+                            <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 px-3 py-2.5 rounded-xl">
+                                <Info className="w-4 h-4 shrink-0" />
+                                系统将自动标记为：<strong>{statusLabels[previewStatus]}</strong>
+                            </div>
+                        )}
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">中文交通指南 *</label>
-                            <input type="text" required value={formData.transport_zh} onChange={e => handleChange('transport_zh', e.target.value)} className="w-full p-3 border border-neutral-200 rounded-xl" />
+                            <label className="text-sm font-medium">开放时间</label>
+                            <input type="text" value={formData.hours_zh} onChange={e => handleChange('hours_zh', e.target.value)} placeholder="如：周二至周日 10:00-18:00，周一闭馆" className="w-full p-3 border border-neutral-200 rounded-xl" />
                         </div>
-
-                        {/* 为了排版紧凑省略了英文时间/交通的单列输入框，可以在完善时加入 */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-neutral-500">英文开放时间</label>
-                                <input type="text" value={formData.hours_en} onChange={e => handleChange('hours_en', e.target.value)} className="w-full p-3 border border-neutral-200 rounded-xl bg-neutral-50" />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-neutral-500">英文交通指南</label>
-                                <input type="text" value={formData.transport_en} onChange={e => handleChange('transport_en', e.target.value)} className="w-full p-3 border border-neutral-200 rounded-xl bg-neutral-50" />
-                            </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">交通指南</label>
+                            <input type="text" value={formData.transport_zh} onChange={e => handleChange('transport_zh', e.target.value)} placeholder="如：地铁4号线世博大道站6号出口" className="w-full p-3 border border-neutral-200 rounded-xl" />
                         </div>
                     </div>
                 </section>
 
-                {/* 艺术家名单 */}
-                <section className="space-y-6 bg-white p-6 rounded-2xl border border-neutral-200">
+                {/* 参展艺术家 */}
+                <section className="space-y-4 bg-white p-6 rounded-2xl border border-neutral-200">
                     <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
                         <h2 className="text-lg font-bold">参展艺术家</h2>
-                        <button type="button" onClick={() => addArrayItem('artists')} className="text-sm text-fuhung-blue font-medium flex items-center gap-1">
+                        <button type="button" onClick={() => handleChange('artists', [...formData.artists, ''])} className="text-sm font-medium flex items-center gap-1 text-blue-600 hover:text-blue-700">
                             <Plus className="w-4 h-4" /> 添加
                         </button>
                     </div>
                     <div className="space-y-3">
                         {formData.artists.map((artist, idx) => (
                             <div key={idx} className="flex gap-2">
-                                <input type="text" required value={artist} onChange={e => handleArrayChange('artists', idx, e.target.value)} placeholder="艺术家名称" className="flex-1 p-3 border border-neutral-200 rounded-xl" />
-                                <button type="button" onClick={() => removeArrayItem('artists', idx)} className="p-3 text-red-500 bg-red-50 rounded-xl hover:bg-red-100"><Trash2 className="w-5 h-5" /></button>
+                                <input type="text" value={artist} onChange={e => { const a = [...formData.artists]; a[idx] = e.target.value; handleChange('artists', a); }} placeholder="艺术家姓名" className="flex-1 p-3 border border-neutral-200 rounded-xl" />
+                                <button type="button" onClick={() => handleChange('artists', formData.artists.filter((_, i) => i !== idx))} className="p-3 text-red-500 bg-red-50 rounded-xl hover:bg-red-100">
+                                    <Trash2 className="w-5 h-5" />
+                                </button>
                             </div>
                         ))}
-                        {formData.artists.length === 0 && <p className="text-sm text-neutral-400">暂无艺术家</p>}
+                        {formData.artists.length === 0 && <p className="text-sm text-neutral-400">暂未添加艺术家</p>}
                     </div>
                 </section>
 
-                {/* 图片列表 */}
-                <section className="space-y-6 bg-white p-6 rounded-2xl border border-neutral-200">
+                {/* 展览图片 */}
+                <section className="space-y-4 bg-white p-6 rounded-2xl border border-neutral-200">
                     <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
                         <h2 className="text-lg font-bold">展览图片</h2>
-                        <button type="button" onClick={() => addArrayItem('images')} className="text-sm text-fuhung-blue font-medium flex items-center gap-1">
+                        <button type="button" onClick={addImage} className="text-sm font-medium flex items-center gap-1 text-blue-600 hover:text-blue-700">
                             <Plus className="w-4 h-4" /> 添加
                         </button>
                     </div>
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         {formData.images.map((img, idx) => (
-                            <div key={idx} className="flex gap-2">
-                                <input type="url" required value={img} onChange={e => handleArrayChange('images', idx, e.target.value)} placeholder="图片 URL" className="flex-1 p-3 border border-neutral-200 rounded-xl" />
-                                <button type="button" onClick={() => removeArrayItem('images', idx)} className="p-3 text-red-500 bg-red-50 rounded-xl hover:bg-red-100"><Trash2 className="w-5 h-5" /></button>
+                            <div key={idx} className="space-y-2">
+                                <div className="flex gap-2">
+                                    <div className="flex-1 space-y-2">
+                                        {img && (
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img src={img} alt={`图片${idx + 1}`} className="w-full h-32 object-cover rounded-xl border border-neutral-200" />
+                                        )}
+                                        <div className="flex gap-2">
+                                            <label className="flex items-center gap-1.5 px-3 py-2 border border-neutral-300 rounded-xl text-sm cursor-pointer hover:bg-neutral-50 disabled:opacity-50">
+                                                <Upload className="w-3.5 h-3.5" />
+                                                {uploadingImage === idx ? '上传中...' : '上传'}
+                                                <input type="file" accept="image/*" className="hidden" onChange={e => handleImageUpload(e, idx)} disabled={uploadingImage !== null} />
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={img}
+                                                onChange={e => { const imgs = [...formData.images]; imgs[idx] = e.target.value; handleChange('images', imgs); }}
+                                                placeholder="或输入图片 URL"
+                                                className="flex-1 p-2.5 border border-neutral-200 rounded-xl text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                    <button type="button" onClick={() => removeImage(idx)} className="p-3 text-red-500 bg-red-50 rounded-xl hover:bg-red-100 self-start">
+                                        <Trash2 className="w-5 h-5" />
+                                    </button>
+                                </div>
                             </div>
                         ))}
-                        {formData.images.length === 0 && <p className="text-sm text-neutral-400">暂无图片</p>}
+                        {formData.images.length === 0 && <p className="text-sm text-neutral-400">暂未添加图片</p>}
                     </div>
                 </section>
             </div>
