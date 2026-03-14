@@ -69,6 +69,15 @@ export default function MapComponent() {
     });
   }, []);
 
+  const exhibitionsByCity = exhibitions.reduce((acc, ex) => {
+    const city = ex.location.city;
+    if (!acc[city]) {
+      acc[city] = [];
+    }
+    acc[city].push(ex);
+    return acc;
+  }, {} as Record<string, Exhibition[]>);
+
   return (
     <div className="h-[calc(100vh-3.5rem)] md:h-screen w-full relative">
       <MapContainer
@@ -81,22 +90,32 @@ export default function MapComponent() {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
-        {exhibitions.map((ex) => {
-          const coords = coordsMap[ex.location.city];
+        {Object.entries(exhibitionsByCity).map(([city, cityExhibitions]) => {
+          const coords = coordsMap[city];
           if (!coords) return null;
 
           return (
-            <Marker key={ex.id} position={coords}>
+            <Marker key={city} position={coords}>
               <Popup>
-                <div className="p-1 max-w-[200px]">
-                  <div className="relative w-full h-24 mb-2">
-                    <Image src={ex.coverImage} alt={ex.title[language]} fill className="object-cover rounded-lg" referrerPolicy="no-referrer" />
+                <div className="p-1 w-[220px] max-h-[350px] overflow-y-auto flex flex-col gap-4 custom-scrollbar">
+                  <div className="sticky top-0 bg-white/95 backdrop-blur z-10 pb-2 border-b font-bold text-sm flex justify-between items-center">
+                    <span>{city}</span>
+                    <span className="bg-neutral-100 px-2 py-0.5 rounded-full text-xs font-medium text-neutral-600">
+                      {cityExhibitions.length}
+                    </span>
                   </div>
-                  <h3 className="font-bold text-sm mb-1">{ex.title[language]}</h3>
-                  <p className="text-xs text-neutral-500 mb-2">{ex.venue[language]}</p>
-                  <a href={`/exhibition/${ex.id}`} className="text-xs text-blue-600 hover:underline">
-                    View Details
-                  </a>
+                  {cityExhibitions.map((ex) => (
+                    <div key={ex.id} className="pb-3 border-b border-neutral-100 last:border-0 last:pb-0">
+                      <div className="relative w-full h-28 mb-2">
+                        <Image src={ex.coverImage} alt={ex.title[language]} fill className="object-cover rounded-lg shadow-sm" referrerPolicy="no-referrer" />
+                      </div>
+                      <h3 className="font-bold text-sm mb-1 leading-tight">{ex.title[language]}</h3>
+                      <p className="text-xs text-neutral-500 mb-2 truncate">{ex.venue[language]}</p>
+                      <a href={`/exhibition/${ex.id}`} className="inline-block text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline">
+                        View Details →
+                      </a>
+                    </div>
+                  ))}
                 </div>
               </Popup>
             </Marker>
