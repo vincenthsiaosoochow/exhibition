@@ -24,17 +24,23 @@ const INITIAL_COORDS: Record<string, [number, number]> = {
   'Taipei': [25.0330, 121.5654],
 };
 
-const geocodeCity = async (city: string): Promise<[number, number] | null> => {
+const geocodeCity = async (city: string): Promise<{ coords: [number, number] | null, fromCache: boolean }> => {
   try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}`);
+    const cached = localStorage.getItem(`geocode_${city}`);
+    if (cached) {
+      return { coords: JSON.parse(cached), fromCache: true };
+    }
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}&limit=1`);
     const data = await res.json();
     if (data && data.length > 0) {
-      return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+      const coords: [number, number] = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+      localStorage.setItem(`geocode_${city}`, JSON.stringify(coords));
+      return { coords, fromCache: false };
     }
   } catch (error) {
     console.error('Failed to geocode city:', city, error);
   }
-  return null;
+  return { coords: null, fromCache: false };
 };
 
 export default function MapComponent() {
@@ -43,30 +49,32 @@ export default function MapComponent() {
   const [coordsMap, setCoordsMap] = useState<Record<string, [number, number]>>(INITIAL_COORDS);
 
   useEffect(() => {
+    let isMounted = true;
     fetchExhibitions().then(async (data) => {
+      if (!isMounted) return;
       setExhibitions(data);
       
-      // 动态解析未知城市的坐标
-      const newCoords = { ...INITIAL_COORDS };
-      let hasNewCoords = false;
       const uniqueCities = Array.from(new Set(data.map((e) => e.location.city)));
       
       for (const city of uniqueCities) {
-        if (!newCoords[city]) {
-          const coords = await geocodeCity(city);
-          if (coords) {
-            newCoords[city] = coords;
-            hasNewCoords = true;
-          }
-          // 延迟遵守 OSM Nominatim 的速率限制
+        if (!isMounted) break;
+        // 如果初始坐标表已有，直接跳过
+        if (INITIAL_COORDS[city]) continue;
+        
+        // 增量获取，防止一次性拿不到所有坐标导致用户什么都看不到或者等很久
+        const result = await geocodeCity(city);
+        if (result.coords) {
+          setCoordsMap(prev => ({ ...prev, [city]: result.coords! }));
+        }
+        
+        // 只有产生真实外部请求时，才需要遵守 Nominatim 速率限制（1请求/秒）进行休眠，避免遭阻断
+        if (!result.fromCache) {
           await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       }
-      
-      if (hasNewCoords) {
-        setCoordsMap(newCoords);
-      }
     });
+
+    return () => { isMounted = false; };
   }, []);
 
   const exhibitionsByCity = exhibitions.reduce((acc, ex) => {
