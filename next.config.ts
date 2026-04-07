@@ -2,6 +2,8 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // NOTE: standalone 模式将所有依赖打包进输出目录，适合 Docker 容器部署
+  output: 'standalone',
   eslint: {
     ignoreDuringBuilds: true,
   },
