@@ -33,11 +33,9 @@ interface ExhibitionRow extends RowDataPacket {
  */
 const EXHIBITION_SELECT_QUERY = `
     SELECT e.*,
-           GROUP_CONCAT(DISTINCT ea.artist_name ORDER BY ea.artist_name SEPARATOR '|||') AS artist_names,
-           GROUP_CONCAT(ei.image_url ORDER BY ei.sort_order SEPARATOR '|||') AS image_urls
+           GROUP_CONCAT(DISTINCT ea.artist_name ORDER BY ea.artist_name SEPARATOR '|||') AS artist_names
     FROM exhibitions e
     LEFT JOIN exhibition_artists ea ON ea.exhibition_id = e.id
-    LEFT JOIN exhibition_images ei ON ei.exhibition_id = e.id
 `;
 
 function parseExhibitionRow(row: ExhibitionRow, mode: 'list' | 'detail' = 'list') {
@@ -47,18 +45,11 @@ function parseExhibitionRow(row: ExhibitionRow, mode: 'list' | 'detail' = 'list'
         ? (mode === 'list' ? `/api/cover/${row.id}` : row.cover_image)
         : (row.cover_image || '');
 
-    const images = row.image_urls ? row.image_urls.split('|||').map((url, idx) => {
-        if (url.startsWith('data:') && mode === 'list') {
-            return `/api/cover/${row.id}/image/${idx}`;
-        }
-        return url;
-    }) : [];
-
     return {
         ...row,
         cover_image: coverImage,
         artists: row.artist_names ? row.artist_names.split('|||') : [],
-        images,
+        images: [] as string[], // 列表模式和返回创建结果时不再需要详细图片
     };
 }
 
@@ -139,8 +130,8 @@ export async function POST(req: NextRequest) {
         const [result] = await db.execute<ResultSetHeader>(
             `INSERT INTO exhibitions (title_en, title_zh, venue_en, venue_zh, continent, country, city,
        start_date, end_date, cover_image, price, status, description_en, description_zh,
-       address_en, address_zh, hours_en, hours_zh, booking_url)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       address_en, address_zh, hours_en, hours_zh, booking_url, venue_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 data.title_en, data.title_zh, data.venue_en, data.venue_zh,
                 data.continent, data.country, data.city,
@@ -150,6 +141,7 @@ export async function POST(req: NextRequest) {
                 data.address_en || '', data.address_zh || '',
                 data.hours_en || '', data.hours_zh || '',
                 data.booking_url || '',
+                data.venue_id || null,
             ]
         );
 

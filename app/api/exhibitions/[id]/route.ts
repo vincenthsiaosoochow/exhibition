@@ -23,11 +23,9 @@ interface ExhibitionRow extends RowDataPacket {
  */
 const EXHIBITION_BY_ID_QUERY = `
     SELECT e.*,
-           GROUP_CONCAT(DISTINCT ea.artist_name ORDER BY ea.artist_name SEPARATOR '|||') AS artist_names,
-           GROUP_CONCAT(ei.image_url ORDER BY ei.sort_order SEPARATOR '|||') AS image_urls
+           GROUP_CONCAT(DISTINCT ea.artist_name ORDER BY ea.artist_name SEPARATOR '|||') AS artist_names
     FROM exhibitions e
     LEFT JOIN exhibition_artists ea ON ea.exhibition_id = e.id
-    LEFT JOIN exhibition_images ei ON ei.exhibition_id = e.id
     WHERE e.id = ?
     GROUP BY e.id
 `;
@@ -36,7 +34,7 @@ function parseRow(row: ExhibitionRow) {
     return {
         ...row,
         artists: row.artist_names ? String(row.artist_names).split('|||') : [],
-        images: row.image_urls ? String(row.image_urls).split('|||') : [],
+        images: [] as string[], // 稍后由独立 SQL 查询填充
     };
 }
 
@@ -63,7 +61,11 @@ export async function GET(
             return NextResponse.json({ detail: '展览不存在' }, { status: 404 });
         }
 
-        return NextResponse.json(parseRow(rows[0]));
+        const exhibition = parseRow(rows[0]);
+        const [imgRows] = await db.execute<RowDataPacket[]>('SELECT image_url FROM exhibition_images WHERE exhibition_id = ? ORDER BY sort_order ASC', [exhibitionId]);
+        exhibition.images = imgRows.map((r) => r.image_url);
+
+        return NextResponse.json(exhibition);
     } catch (err) {
         console.error('[GET /api/exhibitions/[id]]', err);
         return NextResponse.json({ detail: '服务器内部错误' }, { status: 500 });
@@ -136,7 +138,11 @@ export async function PUT(
             return NextResponse.json({ detail: '展览不存在' }, { status: 404 });
         }
 
-        return NextResponse.json(parseRow(rows[0]));
+        const exhibition = parseRow(rows[0]);
+        const [imgRows] = await db.execute<RowDataPacket[]>('SELECT image_url FROM exhibition_images WHERE exhibition_id = ? ORDER BY sort_order ASC', [exhibitionId]);
+        exhibition.images = imgRows.map((r) => r.image_url);
+
+        return NextResponse.json(exhibition);
     } catch (err) {
         console.error('[PUT /api/exhibitions/[id]]', err);
         return NextResponse.json({ detail: err instanceof Error ? err.message : String(err) }, { status: 500 });
