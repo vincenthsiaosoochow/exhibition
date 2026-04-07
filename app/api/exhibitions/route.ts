@@ -97,7 +97,16 @@ export async function GET(req: NextRequest) {
         const price = searchParams.get('price');
         if (price && price !== 'all') { query += ' AND e.price = ?'; params.push(price); }
 
-        query += ' GROUP BY e.id ORDER BY e.start_date DESC';
+        const venueId = searchParams.get('venue_id');
+        if (venueId) { query += ' AND e.venue_id = ?'; params.push(parseInt(venueId, 10)); }
+
+        const sortBy = searchParams.get('sort_by');
+        // NOTE: sort_by=views 时按浏览量降序（热门排序），默认按开始日期降序
+        if (sortBy === 'views') {
+            query += ' GROUP BY e.id ORDER BY COALESCE(e.view_count, 0) DESC';
+        } else {
+            query += ' GROUP BY e.id ORDER BY e.start_date DESC';
+        }
 
         const [rows] = await db.execute<ExhibitionRow[]>(query, params);
         const items = rows.map((row) => parseExhibitionRow(row, 'list'));

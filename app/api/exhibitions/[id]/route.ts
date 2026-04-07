@@ -100,7 +100,7 @@ export async function PUT(
             'title_en', 'title_zh', 'venue_en', 'venue_zh', 'continent', 'country', 'city',
             'start_date', 'end_date', 'cover_image', 'price', 'status',
             'description_en', 'description_zh', 'address_en', 'address_zh',
-            'hours_en', 'hours_zh', 'booking_url',
+            'hours_en', 'hours_zh', 'booking_url', 'venue_id',
         ];
 
         for (const field of allowedFields) {
@@ -178,3 +178,4 @@ export async function DELETE(
         return NextResponse.json({ detail: err instanceof Error ? err.message : String(err) }, { status: 500 });
     }
 }
+

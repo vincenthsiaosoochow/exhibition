@@ -112,6 +112,26 @@ export async function initDb(): Promise<void> {
     // 初始化管理员账号（幂等操作）
     await seedAdmin(db);
 
+    // 创建场馆表
+    await db.execute(`
+    CREATE TABLE IF NOT EXISTS venues (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      name_zh VARCHAR(255) NOT NULL,
+      name_en VARCHAR(255) NOT NULL DEFAULT '',
+      continent VARCHAR(100) NOT NULL DEFAULT '',
+      country VARCHAR(100) NOT NULL DEFAULT '',
+      city VARCHAR(100) NOT NULL DEFAULT '',
+      address_zh VARCHAR(500) NOT NULL DEFAULT '',
+      address_en VARCHAR(500) NOT NULL DEFAULT '',
+      hours_zh VARCHAR(255) NOT NULL DEFAULT '',
+      hours_en VARCHAR(255) NOT NULL DEFAULT '',
+      cover_image MEDIUMTEXT NOT NULL DEFAULT '',
+      description_zh TEXT,
+      description_en TEXT,
+      website VARCHAR(500) NOT NULL DEFAULT ''
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
     // 自动数据库迁移（优先执行，保证后续操作字段正确）
     try {
         await db.execute('ALTER TABLE exhibitions ADD COLUMN booking_url VARCHAR(500) NOT NULL DEFAULT ""');
@@ -137,6 +157,17 @@ export async function initDb(): Promise<void> {
         await db.execute('ALTER TABLE exhibition_images MODIFY COLUMN image_url MEDIUMTEXT NOT NULL');
         console.log('Modified image_url to MEDIUMTEXT.');
     } catch { /* ignored */ }
+
+    // 展览表追加 view_count 和 venue_id 字段
+    try {
+        await db.execute('ALTER TABLE exhibitions ADD COLUMN view_count BIGINT NOT NULL DEFAULT 0');
+        console.log('Added view_count column.');
+    } catch { /* ignored if already exists */ }
+
+    try {
+        await db.execute('ALTER TABLE exhibitions ADD COLUMN venue_id INT NULL');
+        console.log('Added venue_id column.');
+    } catch { /* ignored if already exists */ }
 
     // 初始化示例展览数据（如果为空）
     await seedExhibitions(db);
