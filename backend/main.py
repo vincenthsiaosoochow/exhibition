@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.auth import router as auth_router
 from api.exhibitions import router as exhibitions_router
+from api.venues import router as venues_router
 from database import init_db
 
 logging.basicConfig(
@@ -56,6 +57,7 @@ app.add_middleware(
 # 注册路由
 app.include_router(auth_router)
 app.include_router(exhibitions_router)
+app.include_router(venues_router)
 
 
 @app.get("/api/health")

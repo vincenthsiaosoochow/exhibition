@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import Column, Integer, String, Date, Enum, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, Enum, Text, ForeignKey, BigInteger
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -12,6 +12,12 @@ class Exhibition(Base):
     __tablename__ = "exhibitions"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+
+    # 浏览次数（用于热门排序）
+    view_count = Column(BigInteger, nullable=False, default=0)
+
+    # 关联场馆（可空，兼容旧数据）
+    venue_id = Column(Integer, ForeignKey("venues.id", ondelete="SET NULL"), nullable=True, index=True)
 
     # 双语标题
     title_en = Column(String(255), nullable=False)
@@ -58,6 +64,9 @@ class Exhibition(Base):
     # 双语交通指引
     transport_en = Column(String(500), nullable=False, default="")
     transport_zh = Column(String(500), nullable=False, default="")
+
+    # 预约网址
+    booking_url = Column(String(500), nullable=False, default="")
 
     # 一对多关联
     artists = relationship("ExhibitionArtist", back_populates="exhibition", cascade="all, delete-orphan")

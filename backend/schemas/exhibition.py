@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Literal
+from typing import Literal, Optional
 from pydantic import BaseModel
 
 
@@ -39,6 +39,7 @@ class ExhibitionBase(BaseModel):
     hours_zh: str
     transport_en: str
     transport_zh: str
+    booking_url: str = ""
 
 
 class ExhibitionResponse(ExhibitionBase):
@@ -46,6 +47,8 @@ class ExhibitionResponse(ExhibitionBase):
     API 响应模型：与前端 Exhibition interface 对齐的扁平化结构
     """
     id: int
+    view_count: int = 0
+    venue_id: Optional[int] = None
     artists: list[str]
     images: list[str]
 

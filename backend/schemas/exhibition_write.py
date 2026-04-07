@@ -29,6 +29,10 @@ class ExhibitionCreate(BaseModel):
     hours_zh: str = ""
     transport_en: str = ""
     transport_zh: str = ""
+    # 卪约网址
+    booking_url: str = ""
+    # 关联场馆 ID（可空）
+    venue_id: Optional[int] = None
     # 艺术家和图片作为简单列表传入
     artists: list[str] = []
     images: list[str] = []
@@ -69,5 +73,7 @@ class ExhibitionUpdate(BaseModel):
     hours_zh: Optional[str] = None
     transport_en: Optional[str] = None
     transport_zh: Optional[str] = None
+    booking_url: Optional[str] = None
+    venue_id: Optional[int] = None
     artists: Optional[list[str]] = None
     images: Optional[list[str]] = None

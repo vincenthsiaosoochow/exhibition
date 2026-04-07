@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { fetchExhibitionById, Exhibition } from '@/lib/data';
+import { fetchExhibitionById, incrementViewCount, Exhibition } from '@/lib/data';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { motion, useScroll, useTransform } from 'motion/react';
-import { ArrowLeft, Share2, MapPin, Calendar, Clock, Train, Copy, Check } from 'lucide-react';
+import { ArrowLeft, Share2, MapPin, Calendar, Clock, Building2, Copy, Check } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import clsx from 'clsx';
+import Link from 'next/link';
 
 
 export default function ExhibitionDetails() {
@@ -31,7 +31,10 @@ export default function ExhibitionDetails() {
         setNotFound(true);
       } else {
         setExhibition(data);
-        document.title = `${data.title.zh} | ${data.title.en} | WORLD ART EXHIBITION`;
+        // NOTE: 修复标题格式，避免中英文重复
+        document.title = `${data.title.zh} | ARTWALK`;
+        // 异步记录浏览量，不阻塞页面加载
+        incrementViewCount(id);
       }
       setLoading(false);
     });
@@ -148,7 +151,11 @@ export default function ExhibitionDetails() {
             {title}
           </h1>
           <p className="text-lg text-neutral-300 font-medium">
-            {venue}
+            {exhibition.venueId ? (
+              <Link href={`/venues/${exhibition.venueId}`} className="hover:text-white transition-colors underline underline-offset-4">
+                {venue}
+              </Link>
+            ) : venue}
           </p>
         </motion.div>
       </div>
@@ -172,12 +179,12 @@ export default function ExhibitionDetails() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {exhibition.images.map((img, idx) => (
                 <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden bg-neutral-100">
-                  <Image
+                  {/* NOTE: 使用原生 img 标签而非 Next.js Image，支持 base64 data URL 和任意外站图片 */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
                     src={img}
                     alt={`${title} highlight ${idx + 1}`}
-                    fill
-                    className="object-cover hover:scale-105 transition-transform duration-500"
-                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                   />
                 </div>
               ))}
@@ -222,6 +229,15 @@ export default function ExhibitionDetails() {
                 <MapPin className="w-6 h-6 text-neutral-400 shrink-0" />
                 <div>
                   <p className="font-medium text-neutral-900 mb-2">{address}</p>
+                  {exhibition.venueId && (
+                    <Link
+                      href={`/venues/${exhibition.venueId}`}
+                      className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors mb-2"
+                    >
+                      <Building2 className="w-4 h-4" />
+                      {t('details.venue')}
+                    </Link>
+                  )}
                   <button
                     onClick={handleCopyAddress}
                     className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"

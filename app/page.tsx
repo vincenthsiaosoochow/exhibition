@@ -14,7 +14,7 @@ export default function Home() {
   const { t, language } = useTranslation();
 
   useEffect(() => {
-    document.title = 'Home | WORLD ART EXHIBITION';
+    document.title = '首页 | ARTWALK';
   }, []);
   const searchQuery = useAppStore((state) => state.searchQuery);
   const [exhibitions, setExhibitions] = useState<Exhibition[]>([]);
@@ -95,9 +95,9 @@ export default function Home() {
           >
             <Link
               href="/discover"
-              className="inline-flex items-center gap-2 bg-fuhung-blue text-white px-6 py-3 rounded-full font-medium hover:bg-fuhung-blue/90 transition-colors shadow-lg shadow-fuhung-blue/20"
+              className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-full font-medium hover:bg-neutral-100 transition-colors shadow-lg"
             >
-              {t('nav.discover')}
+              浏览全部展览
               <ChevronRight className="w-4 h-4" />
             </Link>
           </motion.div>

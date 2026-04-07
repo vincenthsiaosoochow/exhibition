@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { getAdminToken, removeAdminToken } from '@/lib/admin-api';
 import Link from 'next/link';
-import { LayoutDashboard, LogOut, Plus, Settings } from 'lucide-react';
+import { LayoutDashboard, LogOut, Settings, Building2 } from 'lucide-react';
 import clsx from 'clsx';
 
 
@@ -43,6 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const navItems = [
         { label: '展览管理', href: '/admin', icon: LayoutDashboard },
+        { label: '场馆管理', href: '/admin/venues', icon: Building2 },
         { label: '系统设置', href: '/admin/settings', icon: Settings },
     ];
 
@@ -51,7 +52,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {/* 侧边栏 */}
             <aside className="w-64 bg-white border-r border-neutral-200 flex flex-col hidden md:flex fixed h-full z-10">
                 <div className="h-16 flex items-center px-6 border-b border-neutral-200">
-                    <h1 className="text-xl font-bold font-serif italic text-black">FUHUNG Admin</h1>
+                    <h1 className="text-xl font-bold tracking-widest text-black">ARTWALK</h1>
                 </div>
 
                 <nav className="flex-1 p-4 space-y-1">
@@ -88,7 +89,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
             {/* 移动端顶部导航 (简单版) */}
             <div className="md:hidden fixed top-0 w-full h-14 bg-white border-b border-neutral-200 flex items-center justify-between px-4 z-20">
-                <h1 className="text-lg font-bold font-serif italic">FUHUNG Admin</h1>
+                <h1 className="text-lg font-bold tracking-widest">ARTWALK</h1>
                 <button onClick={handleLogout} className="p-2 text-neutral-600">
                     <LogOut className="w-5 h-5" />
                 </button>

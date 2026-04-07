@@ -2,8 +2,9 @@ export const translations = {
   zh: {
     nav: {
       home: "首页",
-      discover: "发现",
-      map: "地图",
+      discover: "展览",
+      trending: "热门",
+      venues: "场馆",
       search: "搜索展览、艺术家、场馆...",
     },
     common: {
@@ -24,7 +25,7 @@ export const translations = {
       localRecommendations: "同地区推荐",
     },
     discover: {
-      title: "发现",
+      title: "展览",
       filter: "筛选",
       region: "地区",
       status: "状态",
@@ -33,6 +34,24 @@ export const translations = {
       recent: "近期开展",
       ending: "即将结束",
       longTerm: "长期展览",
+    },
+    trending: {
+      title: "热门展览",
+      subtitle: "根据浏览量排名，发现最受关注的展览",
+      empty: "暂无热门展览数据",
+    },
+    venues: {
+      title: "场馆",
+      subtitle: "探索全球顶级艺术场馆",
+      filter: "按地区筛选",
+      allRegions: "全部地区",
+      exhibitions: "展览",
+      viewAll: "查看全部展览",
+      noVenues: "暂无场馆数据",
+      noExhibitions: "该场馆暂无展览",
+      website: "官网",
+      hours: "开放时间",
+      address: "地址",
     },
     details: {
       about: "展览简介",
@@ -43,7 +62,12 @@ export const translations = {
       hours: "开放时间",
       transport: "交通指南",
       bookNow: "立即预约",
-    }
+      venue: "展览场馆",
+    },
+    footer: {
+      copyright: "Copyright © 2026 Artwalk. All Rights Reserved.",
+      contact: "Contact us：service@artwalk.cn",
+    },
   }
 };
 

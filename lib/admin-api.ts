@@ -1,4 +1,4 @@
-import { Exhibition, fetchExhibitions, fetchExhibitionById } from './data';
+import { Exhibition, fetchExhibitions, fetchExhibitionById, Venue } from './data';
 
 // NOTE: 后端已迁移到 Next.js API Routes（同域），不再需要外部 URL 前缀
 const API_URL = '';
@@ -91,6 +91,43 @@ export const updateExhibition = async (id: number | string, data: unknown) => {
 
 export const deleteExhibition = async (id: number | string) => {
     const res = await adminFetch(`/api/exhibitions/${id}`, {
+        method: 'DELETE',
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: 'Unknown error' }));
+        throw new Error(err.detail || `HTTP ${res.status}`);
+    }
+    return true;
+};
+
+// ---- 场馆 CRUD ----
+
+export const createVenue = async (data: unknown) => {
+    const res = await adminFetch('/api/venues', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: 'Unknown error' }));
+        throw new Error(err.detail || `HTTP ${res.status}`);
+    }
+    return res.json();
+};
+
+export const updateVenue = async (id: number, data: unknown) => {
+    const res = await adminFetch(`/api/venues/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: 'Unknown error' }));
+        throw new Error(err.detail || `HTTP ${res.status}`);
+    }
+    return res.json();
+};
+
+export const deleteVenue = async (id: number) => {
+    const res = await adminFetch(`/api/venues/${id}`, {
         method: 'DELETE',
     });
     if (!res.ok) {

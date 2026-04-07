@@ -13,7 +13,7 @@ export default function Discover() {
   const { t, language } = useTranslation();
 
   useEffect(() => {
-    document.title = 'Discover | WORLD ART EXHIBITION';
+    document.title = '展览 | ARTWALK';
   }, []);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const searchQuery = useAppStore((state) => state.searchQuery);

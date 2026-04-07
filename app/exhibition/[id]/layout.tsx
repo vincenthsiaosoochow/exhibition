@@ -13,14 +13,14 @@ export async function generateMetadata({ params }: Omit<Props, 'children'>): Pro
 
     if (!exhibition) {
         return {
-            title: 'Exhibition Not Found | WORLD ART EXHIBITION'
+            title: 'Exhibition Not Found | ARTWALK'
         };
     }
 
-    const titleEn = exhibition.title.en;
     const titleZh = exhibition.title.zh;
-    const title = `${titleZh} | ${titleEn}`;
-    const description = exhibition.description.zh || exhibition.description.en || 'Discover global art exhibitions at FUHUNG.';
+    // NOTE: 只显示中文标题，避免重复
+    const title = titleZh;
+    const description = exhibition.description.zh || exhibition.description.en || 'Discover global art exhibitions at ARTWALK.';
 
     // Metadata with Open Graph for social media sharing
     return {

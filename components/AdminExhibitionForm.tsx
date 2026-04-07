@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createExhibition, updateExhibition, getAdminToken } from '@/lib/admin-api';
-import { Exhibition } from '@/lib/data';
-import { ArrowLeft, Save, Plus, Trash2, Upload, Image as ImageIcon, Info } from 'lucide-react';
+import { Exhibition, Venue, fetchVenues } from '@/lib/data';
+import { ArrowLeft, Save, Plus, Trash2, Upload, Image as ImageIcon, Info, Search, Building2 } from 'lucide-react';
 import Link from 'next/link';
 
 interface AdminExhibitionFormProps {
@@ -37,6 +37,26 @@ export default function AdminExhibitionForm({ initialData, isEdit }: AdminExhibi
     const [uploadingImage, setUploadingImage] = useState<number | null>(null);
     const coverInputRef = useRef<HTMLInputElement>(null);
 
+    // 场馆搜索功能
+    const [allVenues, setAllVenues] = useState<Venue[]>([]);
+    const [venueSearch, setVenueSearch] = useState('');
+    const [showVenueDropdown, setShowVenueDropdown] = useState(false);
+    const [selectedVenueId, setSelectedVenueId] = useState<number | undefined>(initialData?.venueId);
+    const [selectedVenueName, setSelectedVenueName] = useState('');
+
+    useEffect(() => {
+        // 加载场馆列表以支持搜索
+        fetchVenues().then(setAllVenues);
+    }, []);
+
+    useEffect(() => {
+        // 初始化时如果有 venueId，显示场馆名称
+        if (initialData?.venueId && allVenues.length > 0) {
+            const v = allVenues.find(v => v.id === initialData.venueId);
+            if (v) setSelectedVenueName(v.name_zh);
+        }
+    }, [initialData?.venueId, allVenues]);
+
     const [formData, setFormData] = useState({
         // NOTE: 中文字段为主要输入，提交时自动将中文值复制给英文字段（API 兼容性）
         title_zh: initialData?.title?.zh || '',
@@ -54,6 +74,7 @@ export default function AdminExhibitionForm({ initialData, isEdit }: AdminExhibi
         booking_url: initialData?.bookingUrl || '',
         artists: initialData?.artists || [] as string[],
         images: initialData?.images || [] as string[],
+        venue_id: initialData?.venueId as number | undefined,
     });
 
     const handleChange = (field: string, value: string | string[]) => {
@@ -139,6 +160,7 @@ export default function AdminExhibitionForm({ initialData, isEdit }: AdminExhibi
                 address_en: formData.address_zh,
                 hours_en: formData.hours_zh,
                 booking_url: formData.booking_url,
+                venue_id: selectedVenueId ?? null,
             };
 
             if (isEdit && initialData) {
@@ -248,6 +270,88 @@ export default function AdminExhibitionForm({ initialData, isEdit }: AdminExhibi
                 <section className="space-y-6 bg-white p-6 rounded-2xl border border-neutral-200">
                     <h2 className="text-lg font-bold border-b border-neutral-100 pb-3">场馆与位置</h2>
                     <div className="space-y-4">
+                        {/* 场馆搜索选择 */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium flex items-center gap-1.5">
+                                <Building2 className="w-4 h-4 text-neutral-400" />
+                                从场馆库中选择
+                            </label>
+                            <div className="relative">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                                    <input
+                                        type="text"
+                                        value={venueSearch || selectedVenueName}
+                                        onChange={e => {
+                                            setVenueSearch(e.target.value);
+                                            setSelectedVenueName('');
+                                            setSelectedVenueId(undefined);
+                                            setShowVenueDropdown(true);
+                                        }}
+                                        onFocus={() => setShowVenueDropdown(true)}
+                                        placeholder="搜索场馆名称..."
+                                        className="w-full pl-9 pr-4 p-3 border border-neutral-200 rounded-xl text-sm"
+                                    />
+                                    {selectedVenueId && (
+                                        <button
+                                            type="button"
+                                            onClick={() => { setSelectedVenueId(undefined); setSelectedVenueName(''); setVenueSearch(''); }}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400 hover:text-red-500"
+                                        >
+                                            清除
+                                        </button>
+                                    )}
+                                </div>
+                                {/* 下拉列表 */}
+                                {showVenueDropdown && (
+                                    <div className="absolute top-full left-0 right-0 z-20 mt-1 bg-white border border-neutral-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                                        {allVenues
+                                            .filter(v => !venueSearch || v.name_zh.toLowerCase().includes(venueSearch.toLowerCase()) || v.name_en.toLowerCase().includes(venueSearch.toLowerCase()))
+                                            .map(v => (
+                                                <button
+                                                    key={v.id}
+                                                    type="button"
+                                                    className="w-full text-left px-4 py-3 hover:bg-neutral-50 transition-colors border-b border-neutral-50 last:border-0"
+                                                    onClick={() => {
+                                                        setSelectedVenueId(v.id);
+                                                        setSelectedVenueName(v.name_zh);
+                                                        setVenueSearch('');
+                                                        setShowVenueDropdown(false);
+                                                        // 选择场馆后自动填充地区信息
+                                                        handleChange('venue_zh', v.name_zh);
+                                                        handleChange('continent', v.continent || formData.continent);
+                                                        handleChange('country', v.country || formData.country);
+                                                        handleChange('city', v.city || formData.city);
+                                                        handleChange('address_zh', v.address_zh || formData.address_zh);
+                                                        handleChange('hours_zh', v.hours_zh || formData.hours_zh);
+                                                    }}
+                                                >
+                                                    <p className="font-medium text-sm">{v.name_zh}</p>
+                                                    <p className="text-xs text-neutral-400">{[v.city, v.country].filter(Boolean).join(', ')}</p>
+                                                </button>
+                                            ))}
+                                        {allVenues.filter(v => !venueSearch || v.name_zh.toLowerCase().includes(venueSearch.toLowerCase())).length === 0 && (
+                                            <div className="px-4 py-3 text-sm text-neutral-400">暂无匹配场馆</div>
+                                        )}
+                                    </div>
+                                )}
+                                {/* 点击外部关闭下拉 */}
+                                {showVenueDropdown && (
+                                    <button
+                                        type="button"
+                                        className="fixed inset-0 z-10"
+                                        onClick={() => setShowVenueDropdown(false)}
+                                    />
+                                )}
+                            </div>
+                            {selectedVenueId && (
+                                <p className="text-xs text-green-600 flex items-center gap-1">
+                                    <Building2 className="w-3 h-3" />
+                                    已关联场馆，下方字段已自动填充
+                                </p>
+                            )}
+                        </div>
+
                         <div className="space-y-2">
                             <label className="text-sm font-medium">场馆名称 *</label>
                             <input type="text" required value={formData.venue_zh} onChange={e => handleChange('venue_zh', e.target.value)} placeholder="如：上海当代艺术博物馆" className="w-full p-3 border border-neutral-200 rounded-xl" />

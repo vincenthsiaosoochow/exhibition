@@ -24,6 +24,8 @@ def list_exhibitions(
     city: Optional[str] = Query(None, description="城市筛选"),
     status_filter: Optional[str] = Query(None, alias="status", description="状态筛选：recent/ending/longTerm"),
     price: Optional[str] = Query(None, description="票价筛选：free/paid"),
+    sort_by: Optional[str] = Query(None, description="排序方式：views=按浏览量降序"),
+    venue_id: Optional[int] = Query(None, description="按场馆 ID 筛选"),
     db: Session = Depends(get_db),
 ) -> ExhibitionListResponse:
     """
@@ -37,6 +39,8 @@ def list_exhibitions(
         city=city,
         status=status_filter,
         price=price,
+        sort_by=sort_by,
+        venue_id=venue_id,
     )
     return ExhibitionListResponse(total=len(items), items=items)
 
@@ -55,6 +59,21 @@ def get_exhibition(
     return exhibition
 
 
+@router.post("/{exhibition_id}/view", status_code=status.HTTP_200_OK)
+def increment_view(
+    exhibition_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    记录展览浏览（每次访问详情页时调用）
+    NOTE: 无需鉴权，由前端自动触发
+    """
+    success = exhibition_service.increment_view_count(db=db, exhibition_id=exhibition_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Exhibition not found")
+    return {"ok": True}
+
+
 @router.post("", response_model=ExhibitionResponse, status_code=status.HTTP_201_CREATED)
 def create_exhibition(
     data: ExhibitionCreate,
@@ -64,7 +83,7 @@ def create_exhibition(
     """
     创建新展览（需要管理员权限）
     """
-    logger.info(f"管理员 {admin.username} 创建了新展览：{data.title_en}")
+    logger.info(f"管理员 {admin.username} 创建了新展览：{data.title_zh}")
     return exhibition_service.create_exhibition(db=db, data=data)
 
 
@@ -98,4 +117,3 @@ def delete_exhibition(
     if not success:
         raise HTTPException(status_code=404, detail="Exhibition not found")
     logger.info(f"管理员 {admin.username} 删除了展览：{exhibition_id}")
-

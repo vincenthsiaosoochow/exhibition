@@ -54,5 +54,6 @@ def init_db():
     """
     from models import exhibition  # noqa: F401 触发模型注册
     from models import admin       # noqa: F401 触发 Admin 模型注册
+    from models import venue       # noqa: F401 触发 Venue 模型注册
     Base.metadata.create_all(bind=engine)
     logger.info("数据库表初始化完成")

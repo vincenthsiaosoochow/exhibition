@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, Home, Compass, Map as MapIcon, Menu, X } from 'lucide-react';
+import { Search, Home, Compass, Flame, Building2, Menu, X } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { motion, AnimatePresence } from 'motion/react';
@@ -40,8 +40,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { href: '/', icon: Home, label: t('nav.home') },
     { href: '/discover', icon: Compass, label: t('nav.discover') },
-    { href: '/map', icon: MapIcon, label: t('nav.map') },
+    { href: '/trending', icon: Flame, label: t('nav.trending') },
+    { href: '/venues', icon: Building2, label: t('nav.venues') },
   ];
+
+  // 管理员页面不渲染前台 layout
+  if (pathname?.startsWith('/admin')) {
+    return <>{children}</>;
+  }
 
   if (!isMounted) return null;
 
@@ -56,7 +62,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         )}
         <div className="flex items-center justify-between px-4 h-14 max-w-7xl mx-auto">
           <div className="flex items-center gap-2 md:hidden">
-            <span className="font-semibold tracking-tight">WORLD ART EXHIBITION</span>
+            <span className="font-bold tracking-widest text-lg">ARTWALK</span>
           </div>
 
           <div className="hidden md:flex flex-1 max-w-md mx-4">
@@ -110,12 +116,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col fixed top-0 left-0 bottom-0 w-64 bg-white border-r border-neutral-200 z-40">
         <div className="p-6 flex items-center gap-3">
-          <span className="font-bold text-xl tracking-tight">WORLD ART EXHIBITION</span>
+          <span className="font-bold text-2xl tracking-widest text-black">ARTWALK</span>
         </div>
 
-        <nav className="flex-1 px-4 py-6 space-y-2">
+        <nav className="flex-1 px-4 py-6 space-y-1">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = item.href === '/'
+              ? pathname === '/'
+              : pathname?.startsWith(item.href);
             return (
               <Link
                 key={item.href}
@@ -133,20 +141,40 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
+
+        {/* 底部版权信息 */}
+        <div className="p-4 border-t border-neutral-100">
+          <p className="text-xs text-neutral-400 leading-relaxed">
+            Copyright © 2026 Artwalk.<br />All Rights Reserved.
+          </p>
+          <a
+            href="mailto:service@artwalk.cn"
+            className="text-xs text-neutral-400 hover:text-neutral-600 transition-colors"
+          >
+            service@artwalk.cn
+          </a>
+        </div>
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 md:ml-64 pt-14 pb-16 md:pb-0 min-h-screen">
+      <main className="flex-1 md:ml-64 pt-14 pb-20 md:pb-0 min-h-screen">
         <div className="max-w-7xl mx-auto h-full">
           {children}
+        </div>
+        {/* 移动端底部版权（显示在内容区末尾，让用户可以滚动看到） */}
+        <div className="md:hidden px-4 py-6 text-center border-t border-neutral-100 mt-8">
+          <p className="text-xs text-neutral-400">Copyright © 2026 Artwalk. All Rights Reserved.</p>
+          <a href="mailto:service@artwalk.cn" className="text-xs text-neutral-400">Contact us：service@artwalk.cn</a>
         </div>
       </main>
 
       {/* Mobile Bottom Navbar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-neutral-200 z-50 pb-safe">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-neutral-200 z-50 pb-safe">
         <div className="flex justify-around items-center h-16 px-2">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = item.href === '/'
+              ? pathname === '/'
+              : pathname?.startsWith(item.href);
             return (
               <Link
                 key={item.href}

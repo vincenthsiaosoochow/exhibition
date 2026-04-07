@@ -4,10 +4,10 @@ import AppLayout from '@/components/AppLayout';
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | WORLD ART EXHIBITION',
-    default: 'WORLD ART EXHIBITION',
+    template: '%s | ARTWALK',
+    default: 'ARTWALK',
   },
-  description: 'Discover global art exhibitions',
+  description: '探索全球艺术展览 | Discover global art exhibitions',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

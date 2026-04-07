@@ -33,6 +33,25 @@ export interface Exhibition {
   };
   bookingUrl: string;
   images: string[];
+  viewCount: number;
+  venueId?: number;
+}
+
+export interface Venue {
+  id: number;
+  name_zh: string;
+  name_en: string;
+  continent: string;
+  country: string;
+  city: string;
+  address_zh: string;
+  address_en: string;
+  hours_zh: string;
+  hours_en: string;
+  cover_image: string;
+  description_zh: string;
+  description_en: string;
+  website: string;
 }
 
 // ---- 后端 API 响应类型（扁平结构）----
@@ -58,6 +77,8 @@ interface ApiExhibition {
   hours_en: string;
   hours_zh: string;
   booking_url: string;
+  view_count: number;
+  venue_id?: number;
   artists: string[];
   images: string[];
 }
@@ -65,6 +86,11 @@ interface ApiExhibition {
 interface ApiListResponse {
   total: number;
   items: ApiExhibition[];
+}
+
+interface ApiVenueListResponse {
+  total: number;
+  items: Venue[];
 }
 
 /**
@@ -87,6 +113,8 @@ function toExhibition(api: ApiExhibition): Exhibition {
     hours: { en: api.hours_en, zh: api.hours_zh },
     bookingUrl: api.booking_url || '',
     images: api.images,
+    viewCount: api.view_count || 0,
+    venueId: api.venue_id,
   };
 }
 
@@ -104,6 +132,8 @@ export interface FetchExhibitionsParams {
   city?: string;
   status?: string;
   price?: string;
+  sortBy?: string;
+  venueId?: number;
 }
 
 /**
@@ -118,6 +148,8 @@ export async function fetchExhibitions(params?: FetchExhibitionsParams): Promise
     if (params?.city && params.city !== 'all') query.set('city', params.city);
     if (params?.status && params.status !== 'all') query.set('status', params.status);
     if (params?.price && params.price !== 'all') query.set('price', params.price);
+    if (params?.sortBy) query.set('sort_by', params.sortBy);
+    if (params?.venueId) query.set('venue_id', String(params.venueId));
 
     const baseUrl = getBaseUrl();
     const url = `${baseUrl}/api/exhibitions${query.toString() ? `?${query}` : ''}`;
@@ -154,6 +186,56 @@ export async function fetchExhibitionById(id: string): Promise<Exhibition | unde
   } catch (err) {
     console.error(`fetchExhibitionById(${id}) failed, returning mock data as fallback:`, err);
     return mockExhibitions.find((e) => e.id === id);
+  }
+}
+
+/**
+ * 异步记录展览浏览量（非阻塞，失败静默处理）
+ */
+export async function incrementViewCount(id: string): Promise<void> {
+  try {
+    await fetch(`/api/exhibitions/${id}/view`, { method: 'POST' });
+  } catch {
+    // 浏览量统计失败不影响用户体验，静默忽略
+  }
+}
+
+/**
+ * 获取场馆列表
+ */
+export async function fetchVenues(params?: { continent?: string; country?: string; city?: string; search?: string }): Promise<Venue[]> {
+  try {
+    const query = new URLSearchParams();
+    if (params?.continent && params.continent !== 'all') query.set('continent', params.continent);
+    if (params?.country && params.country !== 'all') query.set('country', params.country);
+    if (params?.city && params.city !== 'all') query.set('city', params.city);
+    if (params?.search) query.set('search', params.search);
+
+    const baseUrl = getBaseUrl();
+    const url = `${baseUrl}/api/venues${query.toString() ? `?${query}` : ''}`;
+    const res = await fetch(url, { next: { revalidate: 60 } });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    const data: ApiVenueListResponse = await res.json();
+    return data.items;
+  } catch (err) {
+    console.error('fetchVenues failed:', err);
+    return [];
+  }
+}
+
+/**
+ * 获取单个场馆详情
+ */
+export async function fetchVenueById(id: number): Promise<Venue | undefined> {
+  try {
+    const baseUrl = getBaseUrl();
+    const res = await fetch(`${baseUrl}/api/venues/${id}`, { next: { revalidate: 60 } });
+    if (res.status === 404) return undefined;
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    return await res.json() as Venue;
+  } catch (err) {
+    console.error(`fetchVenueById(${id}) failed:`, err);
+    return undefined;
   }
 }
 
@@ -195,7 +277,8 @@ export const mockExhibitions: Exhibition[] = [
     images: [
       'https://picsum.photos/800/600?random=11',
       'https://picsum.photos/800/600?random=12'
-    ]
+    ],
+    viewCount: 0,
   },
   {
     id: '2',
@@ -234,7 +317,8 @@ export const mockExhibitions: Exhibition[] = [
     images: [
       'https://picsum.photos/800/600?random=21',
       'https://picsum.photos/800/600?random=22'
-    ]
+    ],
+    viewCount: 0,
   },
   {
     id: '3',
@@ -273,7 +357,8 @@ export const mockExhibitions: Exhibition[] = [
     images: [
       'https://picsum.photos/800/600?random=31',
       'https://picsum.photos/800/600?random=32'
-    ]
+    ],
+    viewCount: 0,
   },
   {
     id: '4',
@@ -312,7 +397,8 @@ export const mockExhibitions: Exhibition[] = [
     images: [
       'https://picsum.photos/800/600?random=41',
       'https://picsum.photos/800/600?random=42'
-    ]
+    ],
+    viewCount: 0,
   },
   {
     id: '5',
@@ -351,6 +437,7 @@ export const mockExhibitions: Exhibition[] = [
     images: [
       'https://picsum.photos/800/600?random=51',
       'https://picsum.photos/800/600?random=52'
-    ]
+    ],
+    viewCount: 0,
   }
 ];
