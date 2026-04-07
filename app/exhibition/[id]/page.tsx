@@ -264,14 +264,6 @@ export default function ExhibitionDetails() {
 
       </div>
 
-      {/* 版权声明 */}
-      <div className="max-w-2xl mx-auto px-4 pb-10">
-        <div className="rounded-2xl border border-neutral-200 bg-neutral-50 px-6 py-5">
-          <p className="text-xs text-neutral-500 leading-relaxed">
-            本网站为免费艺术展览资讯分享平台，仅用于文化艺术交流，非商业用途。网站展示的展览图文、影像等内容，版权均归艺术家、展览主办方及相关权利人所有。若内容侵犯您的合法权益，请及时联系，我们将立即核实处理。
-          </p>
-        </div>
-      </div>
 
     </div>
   );
