@@ -6,9 +6,9 @@
 import mysql from 'mysql2/promise';
 import bcrypt from 'bcryptjs';
 
-// NOTE: 解析 DATABASE_URL，或从 MYSQL_* 环境变量拼装连接配置
+// NOTE: 解析 DATABASE_URL 或 MYSQL_URI，或从 MYSQL_* 环境变量拼装连接配置
 function getDbConfig() {
-    const dbUrl = process.env.DATABASE_URL;
+    const dbUrl = process.env.DATABASE_URL || process.env.MYSQL_URI;
 
     if (dbUrl) {
         // 支持 mysql:// 和 mysql+pymysql:// 两种格式（兼容旧配置）
@@ -125,7 +125,7 @@ export async function initDb(): Promise<void> {
       address_en VARCHAR(500) NOT NULL DEFAULT '',
       hours_zh VARCHAR(255) NOT NULL DEFAULT '',
       hours_en VARCHAR(255) NOT NULL DEFAULT '',
-      cover_image MEDIUMTEXT NOT NULL DEFAULT '',
+      cover_image MEDIUMTEXT NOT NULL,
       description_zh TEXT,
       description_en TEXT,
       website VARCHAR(500) NOT NULL DEFAULT ''
