@@ -23,7 +23,7 @@ function getDbConfig() {
     const port = parseInt(process.env.MYSQL_PORT || '3306', 10);
     const user = process.env.MYSQL_USER || process.env.MYSQL_USERNAME || 'root';
     const password = process.env.MYSQL_PASSWORD || 'root';
-    const database = process.env.MYSQL_DATABASE || 'zeabur';
+    const database = process.env.MYSQL_DATABASE || 'exhibition';
 
     return { host, port, user, password, database };
 }
