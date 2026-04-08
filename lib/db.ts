@@ -12,9 +12,21 @@ function getDbConfig() {
 
     if (dbUrl) {
         // 支持 mysql:// 和 mysql+pymysql:// 两种格式（兼容旧配置）
-        const normalizedUrl = dbUrl
+        let normalizedUrl = dbUrl
             .replace('mysql+pymysql://', 'mysql://')
             .replace('mysql+mysqlconnector://', 'mysql://');
+            
+        // Zeabur 等平台可能只提供 host 和凭据，未包含 database path
+        try {
+            const parsed = new URL(normalizedUrl);
+            if (parsed.pathname === '' || parsed.pathname === '/') {
+                parsed.pathname = '/' + (process.env.MYSQL_DATABASE || 'exhibition');
+                normalizedUrl = parsed.toString();
+            }
+        } catch (e) {
+            console.warn('Failed to parse MYSQL_URI, using as is');
+        }
+        
         return { uri: normalizedUrl };
     }
 

@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import { fetchExhibitions, Exhibition } from '@/lib/data';
+import { fetchExhibitions, fetchVenues, Exhibition, Venue } from '@/lib/data';
 import ExhibitionCard from '@/components/ExhibitionCard';
 import { motion } from 'motion/react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Building2, MapPin, Clock } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAppStore } from '@/lib/store';
@@ -18,11 +18,13 @@ export default function Home() {
   }, []);
   const searchQuery = useAppStore((state) => state.searchQuery);
   const [exhibitions, setExhibitions] = useState<Exhibition[]>([]);
+  const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchExhibitions().then((data) => {
-      setExhibitions(data);
+    Promise.all([fetchExhibitions(), fetchVenues()]).then(([exData, venueData]) => {
+      setExhibitions(exData);
+      setVenues(venueData.slice(0, 3)); // 只取3个作为热门场馆
       setLoading(false);
     });
   }, []);
@@ -39,7 +41,6 @@ export default function Home() {
 
   const trending = filteredExhibitions.filter(e => e.status === 'recent').slice(0, 3);
   const endingSoon = filteredExhibitions.filter(e => e.status === 'ending').slice(0, 3);
-  const localRecs = filteredExhibitions.filter(e => e.location.continent === 'Europe').slice(0, 3);
 
   if (searchQuery) {
     return (
@@ -156,15 +157,65 @@ export default function Home() {
             </section>
           )}
 
-          {/* Local Recommendations */}
-          {localRecs.length > 0 && (
+          {/* Hot Venues Section */}
+          {venues.length > 0 && (
             <section>
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold tracking-tight">{t('home.localRecommendations')}</h2>
+                <h2 className="text-2xl font-bold tracking-tight">热门场馆</h2>
+                <Link href="/venues" className="text-sm font-medium text-neutral-500 hover:text-black flex items-center">
+                  浏览更多 <ChevronRight className="w-4 h-4 ml-1" />
+                </Link>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {localRecs.map((exhibition) => (
-                  <ExhibitionCard key={exhibition.id} exhibition={exhibition} />
+                {venues.map((venue) => (
+                  <Link key={venue.id} href={`/venues/${venue.id}`} className="block group">
+                    <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-neutral-100 hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1">
+                      {/* Cover Image */}
+                      <div className="aspect-video w-full bg-neutral-100 overflow-hidden relative">
+                        {venue.cover_image ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={venue.cover_image}
+                            alt={venue.name_zh}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Building2 className="w-12 h-12 text-neutral-200" />
+                          </div>
+                        )}
+                        {venue.continent && (
+                          <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-semibold text-neutral-800">
+                            {venue.continent === 'Europe' ? '欧洲' : venue.continent === 'Asia' ? '亚洲' : venue.continent}
+                          </div>
+                        )}
+                      </div>
+                      {/* Info */}
+                      <div className="p-5">
+                        <h3 className="text-lg font-bold text-neutral-900 mb-1 group-hover:text-indigo-600 transition-colors line-clamp-1">
+                          {venue.name_zh}
+                        </h3>
+                        {venue.name_en && (
+                          <p className="text-xs text-neutral-400 mb-3 line-clamp-1">{venue.name_en}</p>
+                        )}
+                        <div className="space-y-1.5 mt-2">
+                          {(venue.city || venue.country) && (
+                            <div className="flex items-center gap-2 text-sm text-neutral-500">
+                              <MapPin className="w-3.5 h-3.5 shrink-0 text-neutral-400" />
+                              <span className="truncate">{[venue.city, venue.country].filter(Boolean).join(', ')}</span>
+                            </div>
+                          )}
+                          {venue.hours_zh && (
+                            <div className="flex items-center gap-2 text-sm text-neutral-500">
+                              <Clock className="w-3.5 h-3.5 shrink-0 text-neutral-400" />
+                              <span className="truncate">{venue.hours_zh}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
                 ))}
               </div>
             </section>
