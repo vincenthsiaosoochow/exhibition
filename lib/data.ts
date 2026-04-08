@@ -32,7 +32,8 @@ export interface Exhibition {
     zh: string;
   };
   bookingUrl: string;
-  images: string[];
+  /** 展品图片列表，含图片 URL 和介绍文字 */
+  images: { url: string; caption: string }[];
   viewCount: number;
   venueId?: number;
 }
@@ -80,7 +81,7 @@ interface ApiExhibition {
   view_count: number;
   venue_id?: number;
   artists: string[];
-  images: string[];
+  images: { url: string; caption: string }[];
 }
 
 interface ApiListResponse {
@@ -112,7 +113,7 @@ function toExhibition(api: ApiExhibition): Exhibition {
     address: { en: api.address_en, zh: api.address_zh },
     hours: { en: api.hours_en, zh: api.hours_zh },
     bookingUrl: api.booking_url || '',
-    images: api.images,
+    images: api.images ?? [],
     viewCount: api.view_count || 0,
     venueId: api.venue_id,
   };
@@ -275,8 +276,8 @@ export const mockExhibitions: Exhibition[] = [
     },
     bookingUrl: 'https://atelier-lumieres.com/tickets',
     images: [
-      'https://picsum.photos/800/600?random=11',
-      'https://picsum.photos/800/600?random=12'
+      { url: 'https://picsum.photos/800/600?random=11', caption: '' },
+      { url: 'https://picsum.photos/800/600?random=12', caption: '' }
     ],
     viewCount: 0,
   },
@@ -315,8 +316,8 @@ export const mockExhibitions: Exhibition[] = [
     },
     bookingUrl: 'https://tate.org.uk/tickets',
     images: [
-      'https://picsum.photos/800/600?random=21',
-      'https://picsum.photos/800/600?random=22'
+      { url: 'https://picsum.photos/800/600?random=21', caption: '' },
+      { url: 'https://picsum.photos/800/600?random=22', caption: '' }
     ],
     viewCount: 0,
   },
@@ -355,8 +356,8 @@ export const mockExhibitions: Exhibition[] = [
     },
     bookingUrl: 'https://zeitzmocaa.museum/tickets',
     images: [
-      'https://picsum.photos/800/600?random=31',
-      'https://picsum.photos/800/600?random=32'
+      { url: 'https://picsum.photos/800/600?random=31', caption: '' },
+      { url: 'https://picsum.photos/800/600?random=32', caption: '' }
     ],
     viewCount: 0,
   },
@@ -395,8 +396,8 @@ export const mockExhibitions: Exhibition[] = [
     },
     bookingUrl: 'https://www.moma.org/tickets/',
     images: [
-      'https://picsum.photos/800/600?random=41',
-      'https://picsum.photos/800/600?random=42'
+      { url: 'https://picsum.photos/800/600?random=41', caption: '' },
+      { url: 'https://picsum.photos/800/600?random=42', caption: '' }
     ],
     viewCount: 0,
   },
@@ -435,8 +436,8 @@ export const mockExhibitions: Exhibition[] = [
     },
     bookingUrl: 'https://npm.gov.tw/tickets',
     images: [
-      'https://picsum.photos/800/600?random=51',
-      'https://picsum.photos/800/600?random=52'
+      { url: 'https://picsum.photos/800/600?random=51', caption: '' },
+      { url: 'https://picsum.photos/800/600?random=52', caption: '' }
     ],
     viewCount: 0,
   }

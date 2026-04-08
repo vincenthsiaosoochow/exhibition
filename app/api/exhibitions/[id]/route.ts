@@ -34,7 +34,7 @@ function parseRow(row: ExhibitionRow) {
     return {
         ...row,
         artists: row.artist_names ? String(row.artist_names).split('|||') : [],
-        images: [] as string[], // 稍后由独立 SQL 查询填充
+        images: [] as { url: string; caption: string }[], // 稍后由独立 SQL 查询填充
     };
 }
 
@@ -62,8 +62,12 @@ export async function GET(
         }
 
         const exhibition = parseRow(rows[0]);
-        const [imgRows] = await db.execute<RowDataPacket[]>('SELECT image_url FROM exhibition_images WHERE exhibition_id = ? ORDER BY sort_order ASC', [exhibitionId]);
-        exhibition.images = imgRows.map((r) => r.image_url);
+        // NOTE: 单独查询图片以避免 GROUP_CONCAT 长度限制截断 Base64
+        const [imgRows] = await db.execute<RowDataPacket[]>(
+            'SELECT image_url, caption FROM exhibition_images WHERE exhibition_id = ? ORDER BY sort_order ASC',
+            [exhibitionId]
+        );
+        exhibition.images = imgRows.map((r) => ({ url: r.image_url as string, caption: (r.caption as string) || '' }));
 
         return NextResponse.json(exhibition);
     } catch (err) {
@@ -128,8 +132,12 @@ export async function PUT(
 
         if (images !== undefined) {
             await db.execute('DELETE FROM exhibition_images WHERE exhibition_id = ?', [exhibitionId]);
-            for (let i = 0; i < (images as string[]).length; i++) {
-                await db.execute('INSERT INTO exhibition_images (exhibition_id, image_url, sort_order) VALUES (?, ?, ?)', [exhibitionId, images[i], i]);
+            for (let i = 0; i < (images as { url: string; caption: string }[]).length; i++) {
+                const img = images[i] as { url: string; caption: string };
+                await db.execute(
+                    'INSERT INTO exhibition_images (exhibition_id, image_url, sort_order, caption) VALUES (?, ?, ?, ?)',
+                    [exhibitionId, img.url, i, img.caption || null]
+                );
             }
         }
 
@@ -139,8 +147,11 @@ export async function PUT(
         }
 
         const exhibition = parseRow(rows[0]);
-        const [imgRows] = await db.execute<RowDataPacket[]>('SELECT image_url FROM exhibition_images WHERE exhibition_id = ? ORDER BY sort_order ASC', [exhibitionId]);
-        exhibition.images = imgRows.map((r) => r.image_url);
+        const [imgRows] = await db.execute<RowDataPacket[]>(
+            'SELECT image_url, caption FROM exhibition_images WHERE exhibition_id = ? ORDER BY sort_order ASC',
+            [exhibitionId]
+        );
+        exhibition.images = imgRows.map((r) => ({ url: r.image_url as string, caption: (r.caption as string) || '' }));
 
         return NextResponse.json(exhibition);
     } catch (err) {

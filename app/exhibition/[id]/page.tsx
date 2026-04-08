@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { fetchExhibitionById, incrementViewCount, Exhibition } from '@/lib/data';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { motion, useScroll, useTransform } from 'motion/react';
-import { ArrowLeft, Share2, MapPin, Calendar, Clock, Building2, Copy, Check } from 'lucide-react';
+import { ArrowLeft, Share2, MapPin, Calendar, Clock, Building2, Copy, Check, X, Volume2, VolumeX, Pause } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import clsx from 'clsx';
 import Link from 'next/link';
@@ -20,6 +20,56 @@ export default function ExhibitionDetails() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [copied, setCopied] = useState(false);
+  // 展品图片弹窗状态
+  const [modalImg, setModalImg] = useState<{ url: string; caption: string } | null>(null);
+  // 语音朗读状态: idle | playing | paused
+  const [ttsState, setTtsState] = useState<'idle' | 'playing' | 'paused'>('idle');
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+
+  // 关闭弹窗时停止语音
+  const closeModal = useCallback(() => {
+    window.speechSynthesis?.cancel();
+    setTtsState('idle');
+    setModalImg(null);
+  }, []);
+
+  // ESC 键关闭
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') closeModal(); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [closeModal]);
+
+  /**
+   * 语音朗读控制逻辑
+   * NOTE: Web Speech API 不需要任何第三方服务，支持中文 zh-CN
+   */
+  const handleTTS = useCallback((text: string) => {
+    if (!('speechSynthesis' in window)) {
+      alert('您的浏览器不支持语音功能');
+      return;
+    }
+    if (ttsState === 'playing') {
+      window.speechSynthesis.pause();
+      setTtsState('paused');
+      return;
+    }
+    if (ttsState === 'paused') {
+      window.speechSynthesis.resume();
+      setTtsState('playing');
+      return;
+    }
+    // idle 状态开始新朗读
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'zh-CN';
+    utter.rate = 0.95;
+    utter.onend = () => setTtsState('idle');
+    utter.onerror = () => setTtsState('idle');
+    utteranceRef.current = utter;
+    window.speechSynthesis.speak(utter);
+    setTtsState('playing');
+  }, [ttsState]);
 
   const { scrollY } = useScroll();
   const headerOpacity = useTransform(scrollY, [0, 200], [0, 1]);
@@ -178,15 +228,26 @@ export default function ExhibitionDetails() {
             <h2 className="text-2xl font-bold mb-6">{t('details.highlights')}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {exhibition.images.map((img, idx) => (
-                <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden bg-neutral-100">
-                  {/* NOTE: 使用原生 img 标签而非 Next.js Image，支持 base64 data URL 和任意外站图片 */}
+                <button
+                  key={idx}
+                  onClick={() => setModalImg(img)}
+                  className="relative aspect-square rounded-2xl overflow-hidden bg-neutral-100 group cursor-pointer focus:outline-none focus:ring-2 focus:ring-black"
+                  aria-label={`查看展品 ${idx + 1}`}
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={img}
+                    src={img.url}
                     alt={`${title} highlight ${idx + 1}`}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                </div>
+                  {/* 有介绍文字时显示提示 */}
+                  {img.caption && (
+                    <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                      <Volume2 className="w-3 h-3" />
+                      <span>查看介绍</span>
+                    </div>
+                  )}
+                </button>
               ))}
             </div>
           </section>
@@ -264,6 +325,81 @@ export default function ExhibitionDetails() {
 
       </div>
 
+
+      {/* ---- 展品图片介绍弹窗 ---- */}
+      {modalImg && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={closeModal}
+        >
+          {/* 遮罩 */}
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+
+          {/* 弹窗主体 */}
+          <div
+            className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-3xl shadow-2xl flex flex-col"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* 关闭按钮 */}
+            <button
+              onClick={closeModal}
+              className="absolute top-4 right-4 z-20 p-2 bg-black/10 hover:bg-black/20 rounded-full transition-colors"
+              aria-label="关闭"
+            >
+              <X className="w-5 h-5 text-neutral-800" />
+            </button>
+
+            {/* 大图 */}
+            <div className="w-full aspect-video bg-neutral-100 rounded-t-3xl overflow-hidden shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={modalImg.url}
+                alt="展品图片"
+                className="w-full h-full object-contain"
+              />
+            </div>
+
+            {/* 介绍文字 + 语音朗读 */}
+            {modalImg.caption ? (
+              <div className="p-6 space-y-4">
+                {/* 顶部工具栏 */}
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-neutral-900">展品介绍</h3>
+                  {/* 语音朗读按钮 */}
+                  <button
+                    onClick={() => handleTTS(modalImg.caption)}
+                    className={clsx(
+                      'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all',
+                      ttsState === 'playing'
+                        ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                        : ttsState === 'paused'
+                          ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                          : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                    )}
+                    aria-label={ttsState === 'playing' ? '暂停朗读' : ttsState === 'paused' ? '继续朗读' : '语音朗读'}
+                  >
+                    {ttsState === 'playing' ? (
+                      <><Pause className="w-4 h-4" />朗读中</>
+                    ) : ttsState === 'paused' ? (
+                      <><Volume2 className="w-4 h-4" />继续</>
+                    ) : (
+                      <><Volume2 className="w-4 h-4" />语音朗读</>
+                    )}
+                  </button>
+                </div>
+                {/* 介绍文字：whitespace-pre-line 保留换行 */}
+                <p className="text-neutral-700 leading-relaxed text-base whitespace-pre-line">
+                  {modalImg.caption}
+                </p>
+              </div>
+            ) : (
+              <div className="p-6 text-center text-neutral-400 text-sm">
+                暂无展品介绍
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
   );

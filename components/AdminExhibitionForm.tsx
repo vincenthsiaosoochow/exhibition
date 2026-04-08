@@ -73,11 +73,11 @@ export default function AdminExhibitionForm({ initialData, isEdit }: AdminExhibi
         hours_zh: initialData?.hours?.zh || '',
         booking_url: initialData?.bookingUrl || '',
         artists: initialData?.artists || [] as string[],
-        images: initialData?.images || [] as string[],
+        images: initialData?.images || [] as { url: string; caption: string }[],
         venue_id: initialData?.venueId as number | undefined,
     });
 
-    const handleChange = (field: string, value: string | string[]) => {
+    const handleChange = (field: string, value: string | string[] | { url: string; caption: string }[]) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
@@ -123,9 +123,9 @@ export default function AdminExhibitionForm({ initialData, isEdit }: AdminExhibi
             const url = await uploadFile(file);
             const newImages = [...formData.images];
             if (index < newImages.length) {
-                newImages[index] = url;
+                newImages[index] = { ...newImages[index], url };
             } else {
-                newImages.push(url);
+                newImages.push({ url, caption: '' });
             }
             handleChange('images', newImages);
         } catch (err) {
@@ -136,7 +136,7 @@ export default function AdminExhibitionForm({ initialData, isEdit }: AdminExhibi
     };
 
     const addImage = () => {
-        handleChange('images', [...formData.images, '']);
+        handleChange('images', [...formData.images, { url: '', caption: '' }]);
     };
 
     const removeImage = (index: number) => {
@@ -449,12 +449,13 @@ export default function AdminExhibitionForm({ initialData, isEdit }: AdminExhibi
                     </div>
                     <div className="space-y-4">
                         {formData.images.map((img, idx) => (
-                            <div key={idx} className="space-y-2">
+                            <div key={idx} className="space-y-3 bg-neutral-50 rounded-2xl p-4">
+                                {/* 图片预览和上传 */}
                                 <div className="flex gap-2">
                                     <div className="flex-1 space-y-2">
-                                        {img && (
+                                        {img.url && (
                                             // eslint-disable-next-line @next/next/no-img-element
-                                            <img src={img} alt={`图片${idx + 1}`} className="w-full h-32 object-cover rounded-xl border border-neutral-200" />
+                                            <img src={img.url} alt={`图片${idx + 1}`} className="w-full h-32 object-cover rounded-xl border border-neutral-200" />
                                         )}
                                         <div className="flex gap-2">
                                             <label className="flex items-center gap-1.5 px-3 py-2 border border-neutral-300 rounded-xl text-sm cursor-pointer hover:bg-neutral-50 disabled:opacity-50">
@@ -464,8 +465,12 @@ export default function AdminExhibitionForm({ initialData, isEdit }: AdminExhibi
                                             </label>
                                             <input
                                                 type="text"
-                                                value={img}
-                                                onChange={e => { const imgs = [...formData.images]; imgs[idx] = e.target.value; handleChange('images', imgs); }}
+                                                value={img.url}
+                                                onChange={e => {
+                                                    const imgs = [...formData.images];
+                                                    imgs[idx] = { ...imgs[idx], url: e.target.value };
+                                                    handleChange('images', imgs);
+                                                }}
                                                 placeholder="或输入图片 URL"
                                                 className="flex-1 p-2.5 border border-neutral-200 rounded-xl text-sm"
                                             />
@@ -474,6 +479,21 @@ export default function AdminExhibitionForm({ initialData, isEdit }: AdminExhibi
                                     <button type="button" onClick={() => removeImage(idx)} className="p-3 text-red-500 bg-red-50 rounded-xl hover:bg-red-100 self-start">
                                         <Trash2 className="w-5 h-5" />
                                     </button>
+                                </div>
+                                {/* 展品介绍文字 */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-medium text-neutral-500">展品介绍（点击后前台弹窗展示，支持换行）</label>
+                                    <textarea
+                                        rows={4}
+                                        value={img.caption}
+                                        onChange={e => {
+                                            const imgs = [...formData.images];
+                                            imgs[idx] = { ...imgs[idx], caption: e.target.value };
+                                            handleChange('images', imgs);
+                                        }}
+                                        placeholder="请输入该展品的介绍文字，支持回车换行，留空则不显示..."
+                                        className="w-full p-3 border border-neutral-200 rounded-xl text-sm resize-none bg-white focus:outline-none focus:ring-2 focus:ring-neutral-300"
+                                    />
                                 </div>
                             </div>
                         ))}

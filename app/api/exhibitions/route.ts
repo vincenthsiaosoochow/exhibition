@@ -150,8 +150,12 @@ export async function POST(req: NextRequest) {
         for (const name of artists as string[]) {
             await db.execute('INSERT INTO exhibition_artists (exhibition_id, artist_name) VALUES (?, ?)', [exhibitionId, name]);
         }
-        for (let i = 0; i < (images as string[]).length; i++) {
-            await db.execute('INSERT INTO exhibition_images (exhibition_id, image_url, sort_order) VALUES (?, ?, ?)', [exhibitionId, images[i], i]);
+        for (let i = 0; i < (images as { url: string; caption: string }[]).length; i++) {
+            const img = images[i] as { url: string; caption: string };
+            await db.execute(
+                'INSERT INTO exhibition_images (exhibition_id, image_url, sort_order, caption) VALUES (?, ?, ?, ?)',
+                [exhibitionId, img.url, i, img.caption || null]
+            );
         }
 
         // 查询刚创建的展览并返回完整数据

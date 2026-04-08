@@ -169,6 +169,12 @@ export async function initDb(): Promise<void> {
         console.log('Added venue_id column.');
     } catch { /* ignored if already exists */ }
 
+    // NOTE: 为展品图片追加介绍文字字段，TEXT 类型不加 DEFAULT（MySQL 严格模式限制）
+    try {
+        await db.execute('ALTER TABLE exhibition_images ADD COLUMN caption TEXT');
+        console.log('Added caption column to exhibition_images.');
+    } catch { /* ignored if already exists */ }
+
     // 初始化示例展览数据（如果为空）
     await seedExhibitions(db);
 }
