@@ -1,4 +1,5 @@
-'use server';
+// NOTE: force-dynamic 防止 next build 阶段调用自身 API（此时服务未启动）
+export const dynamic = 'force-dynamic';
 
 import { notFound } from 'next/navigation';
 import { fetchVenueById, fetchExhibitions } from '@/lib/data';

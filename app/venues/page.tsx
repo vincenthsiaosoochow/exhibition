@@ -1,4 +1,6 @@
-'use server';
+// NOTE: force-dynamic 防止 next build 阶段调用自身 API（此时服务未启动）
+// 该页面改为每次请求时服务端动态渲染
+export const dynamic = 'force-dynamic';
 
 import { Suspense } from 'react';
 import VenuesClient from './VenuesClient';
@@ -9,7 +11,8 @@ import { fetchVenues } from '@/lib/data';
  * 用户访问时无需等待客户端 JS 加载 + API 往返，首屏即可看到内容。
  */
 export default async function VenuesPage() {
-  const venues = await fetchVenues();
+  // 构建期获取失败时优雅降级为空列表，运行时正常返回数据
+  const venues = await fetchVenues().catch(() => []);
   return (
     <Suspense fallback={null}>
       <VenuesClient initialVenues={venues} />

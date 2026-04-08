@@ -30,6 +30,8 @@ interface VenueRow extends RowDataPacket {
 
 /**
  * GET /api/venues — 获取场馆列表，支持地区筛选和关键词搜索
+ * NOTE: 列表模式不返回 cover_image 全量 Base64，改用 /api/cover/venue/[id] 代理 URL，
+ * 防止 51MB+ 响应超出 Next.js 2MB 数据缓存限制
  */
 export async function GET(req: NextRequest) {
     try {
@@ -37,7 +39,8 @@ export async function GET(req: NextRequest) {
         const db = getDb();
         const { searchParams } = req.nextUrl;
 
-        let query = 'SELECT * FROM venues WHERE 1=1';
+        // NOTE: 排除 cover_image 大字段，通过代理路由按需加载
+        let query = 'SELECT id, name_zh, name_en, continent, country, city, address_zh, address_en, hours_zh, hours_en, description_zh, description_en, website, (cover_image IS NOT NULL AND cover_image != \'\') AS has_cover FROM venues WHERE 1=1';
         const params: (string | number)[] = [];
 
         const search = searchParams.get('search');
@@ -68,7 +71,16 @@ export async function GET(req: NextRequest) {
         query += ' ORDER BY name_zh ASC';
 
         const [rows] = await db.execute<VenueRow[]>(query, params);
-        return NextResponse.json({ total: rows.length, items: rows }, {
+
+        // 将 has_cover 标记转换为代理 URL
+        const items = rows.map((row) => ({
+            ...row,
+            cover_image: (row as unknown as { has_cover: number }).has_cover
+                ? `/api/cover/venue/${row.id}`
+                : '',
+        }));
+
+        return NextResponse.json({ total: items.length, items }, {
             headers: { 'Cache-Control': 'public, max-age=60, stale-while-revalidate=120' },
         });
     } catch (err) {
@@ -76,6 +88,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ detail: err instanceof Error ? err.message : String(err) }, { status: 500 });
     }
 }
+
 
 /**
  * POST /api/venues — 创建场馆（需要管理员权限）
