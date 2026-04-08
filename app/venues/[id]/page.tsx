@@ -2,11 +2,36 @@
 export const dynamic = 'force-dynamic';
 
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 import { fetchVenueById, fetchExhibitions } from '@/lib/data';
 import VenueDetailClient from './VenueDetailClient';
 
 interface Props {
   params: Promise<{ id: string }>;
+}
+
+/**
+ * 根据服务端获取的数据动态生成页面 Title、Meta 等 SEO 信息
+ */
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const venueId = Number(id);
+  if (!venueId || isNaN(venueId)) return {};
+
+  const venue = await fetchVenueById(venueId);
+  if (!venue) return {};
+
+  return {
+    title: `${venue.name_zh} | ARTWALK`,
+    description: venue.description_zh || venue.address_zh || '场馆详情',
+    openGraph: {
+      title: `${venue.name_zh} | ARTWALK`,
+      description: venue.description_zh || venue.address_zh || '场馆详情',
+      images: venue.cover_image
+        ? [venue.cover_image.startsWith('http') ? venue.cover_image : `https://artwalk.cn${venue.cover_image}`]
+        : [],
+    },
+  };
 }
 
 /**

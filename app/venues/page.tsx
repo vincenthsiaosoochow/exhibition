@@ -3,8 +3,18 @@
 export const dynamic = 'force-dynamic';
 
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 import VenuesClient from './VenuesClient';
 import { fetchVenues } from '@/lib/data';
+
+export const metadata: Metadata = {
+  title: '场馆 | ARTWALK',
+  description: '探索全球艺术场馆',
+  openGraph: {
+    title: '场馆 | ARTWALK',
+    description: '探索全球艺术场馆',
+  },
+};
 
 /**
  * NOTE: 改为 Server Component 以在服务端直接获取数据，
