@@ -54,28 +54,10 @@ export default function VenueDetailClient({ venue, exhibitions }: Props) {
 
       {/* Content */}
       <div className="max-w-5xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-3 gap-10">
-        {/* Main: Exhibitions */}
-        <div className="md:col-span-2">
-          <h2 className="text-2xl font-bold mb-6">
-            展览 <span className="text-neutral-400 text-lg font-normal">({exhibitions.length})</span>
-          </h2>
-
-          {exhibitions.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {exhibitions.map((ex) => (
-                <ExhibitionCard key={ex.id} exhibition={ex} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center text-neutral-500 py-16 bg-neutral-50 rounded-2xl border border-neutral-100">
-              <p>该场馆暂无展览</p>
-            </div>
-          )}
-        </div>
-
-        {/* Sidebar: Info */}
-        <div className="space-y-6">
-          <div className="bg-neutral-50 rounded-2xl p-6 border border-neutral-100 sticky top-24">
+        
+        {/* Sidebar: Info (移动到上方/左侧) */}
+        <div className="space-y-6 md:col-span-1">
+          <div className="bg-neutral-50 rounded-2xl p-6 border border-neutral-100 md:sticky top-24">
             <h3 className="text-lg font-bold mb-5">场馆信息</h3>
 
             <div className="space-y-4">
@@ -122,6 +104,26 @@ export default function VenueDetailClient({ venue, exhibitions }: Props) {
             </div>
           </div>
         </div>
+
+        {/* Main: Exhibitions (移动到下方/右侧) */}
+        <div className="md:col-span-2">
+          <h2 className="text-2xl font-bold mb-6">
+            展览 <span className="text-neutral-400 text-lg font-normal">({exhibitions.length})</span>
+          </h2>
+
+          {exhibitions.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {exhibitions.map((ex) => (
+                <ExhibitionCard key={ex.id} exhibition={ex} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-neutral-500 py-16 bg-neutral-50 rounded-2xl border border-neutral-100">
+              <p>该场馆暂无展览</p>
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );
