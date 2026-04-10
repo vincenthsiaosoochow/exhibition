@@ -8,6 +8,12 @@ import { useAppStore } from '@/lib/store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { motion, AnimatePresence } from 'motion/react';
 import clsx from 'clsx';
+import localFont from 'next/font/local';
+
+const nauryzFont = localFont({
+  src: '../app/fonts/NauryzRedKeds.ttf',
+  display: 'swap',
+});
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { t, language } = useTranslation();
@@ -62,7 +68,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         )}
         <div className="flex items-center justify-between px-4 h-14 max-w-7xl mx-auto">
           <div className="flex items-center gap-2 md:hidden">
-            <span className="font-bold tracking-wide text-lg">ARTWALK</span>
+            <span className={clsx("font-bold tracking-wide text-lg", nauryzFont.className)}>ARTWALK</span>
           </div>
 
           <div className="hidden md:flex flex-1 max-w-md mx-4">
@@ -116,7 +122,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col fixed top-0 left-0 bottom-0 w-64 bg-white border-r border-neutral-200 z-40">
         <div className="p-6 flex items-center gap-3">
-          <span className="font-bold text-2xl tracking-wide text-black">ARTWALK</span>
+          <span className={clsx("font-bold text-2xl tracking-wide text-black", nauryzFont.className)}>ARTWALK</span>
         </div>
 
         <nav className="flex-1 px-4 py-6 space-y-1">
