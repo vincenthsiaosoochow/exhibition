@@ -9,11 +9,13 @@ type Props = {
 export async function generateMetadata({ params }: Omit<Props, 'children'>): Promise<Metadata> {
     const resolvedParams = await params;
     const id = resolvedParams.id;
+    // NOTE: Next.js 会自动对相同 URL 的 fetch 去重（Request Deduplication），
+    // 此处与 page.tsx 的 fetchExhibitionById 共用同一次网络请求，不会双倍查询 DB。
     const exhibition = await fetchExhibitionById(id);
 
     if (!exhibition) {
         return {
-            title: 'Exhibition Not Found | ARTWALK'
+            title: 'Exhibition Not Found'
         };
     }
 
