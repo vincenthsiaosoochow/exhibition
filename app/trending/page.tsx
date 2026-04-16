@@ -58,7 +58,7 @@ export default function Trending() {
         </div>
       ) : exhibitions.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {exhibitions.map((exhibition, index) => (
+          {exhibitions.slice(0, 20).map((exhibition, index) => (
             <div key={exhibition.id} className="relative">
               {/* 排名徽章 */}
               <div className={`absolute top-3 left-3 z-10 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${

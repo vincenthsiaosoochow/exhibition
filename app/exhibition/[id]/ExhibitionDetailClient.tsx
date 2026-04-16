@@ -6,8 +6,8 @@ import { Exhibition } from '@/lib/data';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { motion, useScroll, useTransform } from 'motion/react';
 import {
-  ArrowLeft, Share2, MapPin, Calendar, Clock, Building2,
-  Copy, Check, X, Volume2, Pause,
+  ArrowLeft, Share2, MapPin, Calendar, Clock,
+  X, Volume2, Pause,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import clsx from 'clsx';
@@ -30,7 +30,6 @@ export default function ExhibitionDetailClient({ exhibition }: Props) {
   const router = useRouter();
   const { t, language } = useTranslation();
 
-  const [copied, setCopied] = useState(false);
   // 展品图片弹窗状态
   const [modalImg, setModalImg] = useState<{ url: string; caption: string } | null>(null);
   // 语音朗读状态: idle | playing | paused
@@ -111,11 +110,6 @@ export default function ExhibitionDetailClient({ exhibition }: Props) {
     }
   };
 
-  const handleCopyAddress = () => {
-    navigator.clipboard.writeText(address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <div className="relative bg-white min-h-screen pb-24 md:pb-8">
@@ -272,23 +266,7 @@ export default function ExhibitionDetailClient({ exhibition }: Props) {
               <div className="flex gap-4">
                 <MapPin className="w-6 h-6 text-neutral-400 shrink-0" />
                 <div>
-                  <p className="font-medium text-neutral-900 mb-2">{address}</p>
-                  {exhibition.venueId && (
-                    <Link
-                      href={`/venues/${exhibition.venueId}`}
-                      className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors mb-2"
-                    >
-                      <Building2 className="w-4 h-4" />
-                      {t('details.venue')}
-                    </Link>
-                  )}
-                  <button
-                    onClick={handleCopyAddress}
-                    className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
-                  >
-                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    {copied ? t('common.copied') : t('common.copyAddress')}
-                  </button>
+                  <p className="font-medium text-neutral-900">{address}</p>
                 </div>
               </div>
             </div>
