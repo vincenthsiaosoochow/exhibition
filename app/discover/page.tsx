@@ -288,7 +288,10 @@ export default function Discover() {
             {totalPages > 1 && (
               <div className="flex justify-center items-center gap-4 mt-12 pb-8">
                 <button
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  onClick={() => {
+                    setCurrentPage(prev => Math.max(prev - 1, 1));
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
                   disabled={currentPage === 1}
                   className="px-4 py-2 rounded-full border border-neutral-200 hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm transition-colors"
                 >
@@ -298,7 +301,10 @@ export default function Discover() {
                   {language === 'zh' ? `第 ${currentPage} / ${totalPages} 页` : `Page ${currentPage} of ${totalPages}`}
                 </div>
                 <button
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  onClick={() => {
+                    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
                   disabled={currentPage === totalPages}
                   className="px-4 py-2 rounded-full border border-neutral-200 hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm transition-colors"
                 >
