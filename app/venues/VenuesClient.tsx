@@ -22,13 +22,16 @@ const CONTINENT_LABELS: Record<string, string> = {
 };
 
 /**
- * 场馆列表交互层：仅负责地区筛选切换等客户端交互。
+ * 场馆列表交互层：负责洲 / 国家 / 城市三级级联筛选。
  * 数据已由上层 Server Component 预取，无需在浏览器端再发 API 请求。
  */
 export default function VenuesClient({ initialVenues }: Props) {
   const { t } = useTranslation();
   const [selectedRegion, setSelectedRegion] = useState('all');
+  const [selectedCountry, setSelectedCountry] = useState('all');
+  const [selectedCity, setSelectedCity] = useState('all');
 
+  // 从实际数据中提取洲际列表
   const regions = useMemo(() => {
     const continents = Array.from(
       new Set(initialVenues.map((v) => v.continent).filter(Boolean))
@@ -36,10 +39,48 @@ export default function VenuesClient({ initialVenues }: Props) {
     return ['all', ...continents];
   }, [initialVenues]);
 
-  const filteredVenues = useMemo(() => {
-    if (selectedRegion === 'all') return initialVenues;
-    return initialVenues.filter((v) => v.continent === selectedRegion);
+  // 国家列表随洲联动
+  const availableCountries = useMemo(() => {
+    const source = selectedRegion === 'all'
+      ? initialVenues
+      : initialVenues.filter((v) => v.continent === selectedRegion);
+    const countries = Array.from(new Set(source.map((v) => v.country).filter(Boolean)));
+    return ['all', ...countries];
   }, [initialVenues, selectedRegion]);
+
+  // 城市列表随国家联动（国家未选则随洲联动）
+  const availableCities = useMemo(() => {
+    let source = initialVenues;
+    if (selectedCountry !== 'all') {
+      source = initialVenues.filter((v) => v.country === selectedCountry);
+    } else if (selectedRegion !== 'all') {
+      source = initialVenues.filter((v) => v.continent === selectedRegion);
+    }
+    const cities = Array.from(new Set(source.map((v) => v.city).filter(Boolean)));
+    return ['all', ...cities];
+  }, [initialVenues, selectedRegion, selectedCountry]);
+
+  const filteredVenues = useMemo(() => {
+    return initialVenues.filter((v) => {
+      if (selectedRegion !== 'all' && v.continent !== selectedRegion) return false;
+      if (selectedCountry !== 'all' && v.country !== selectedCountry) return false;
+      if (selectedCity !== 'all' && v.city !== selectedCity) return false;
+      return true;
+    });
+  }, [initialVenues, selectedRegion, selectedCountry, selectedCity]);
+
+  // 切换洲时重置下级筛选
+  const handleRegionChange = (region: string) => {
+    setSelectedRegion(region);
+    setSelectedCountry('all');
+    setSelectedCity('all');
+  };
+
+  // 切换国家时重置城市筛选
+  const handleCountryChange = (country: string) => {
+    setSelectedCountry(country);
+    setSelectedCity('all');
+  };
 
   return (
     <div className="px-4 py-8">
@@ -58,25 +99,68 @@ export default function VenuesClient({ initialVenues }: Props) {
         <p className="text-neutral-500">{t('venues.subtitle')}</p>
       </motion.div>
 
-      {/* Region Filter */}
-      {regions.length > 1 && (
-        <div className="flex flex-wrap gap-2 mb-8">
-          {regions.map((region) => (
-            <button
-              key={region}
-              onClick={() => setSelectedRegion(region)}
-              className={clsx(
-                'px-4 py-2 rounded-full text-sm font-medium transition-all duration-200',
-                selectedRegion === region
-                  ? 'bg-black text-white shadow-md'
-                  : 'bg-white text-neutral-600 border border-neutral-200 hover:border-neutral-400'
-              )}
-            >
-              {region === 'all' ? t('venues.allRegions') : (CONTINENT_LABELS[region] ?? region)}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Filters — 三级级联：洲 → 国家 → 城市 */}
+      <div className="space-y-3 mb-8">
+        {/* 洲筛选 */}
+        {regions.length > 1 && (
+          <div className="flex flex-wrap gap-2">
+            {regions.map((region) => (
+              <button
+                key={region}
+                onClick={() => handleRegionChange(region)}
+                className={clsx(
+                  'px-4 py-2 rounded-full text-sm font-medium transition-all duration-200',
+                  selectedRegion === region
+                    ? 'bg-black text-white shadow-md'
+                    : 'bg-white text-neutral-600 border border-neutral-200 hover:border-neutral-400'
+                )}
+              >
+                {region === 'all' ? t('venues.allRegions') : (CONTINENT_LABELS[region] ?? region)}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* 国家筛选（有多个国家时才显示） */}
+        {availableCountries.length > 2 && (
+          <div className="flex flex-wrap gap-2 pl-2 border-l-2 border-neutral-100">
+            {availableCountries.map((country) => (
+              <button
+                key={country}
+                onClick={() => handleCountryChange(country)}
+                className={clsx(
+                  'px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200',
+                  selectedCountry === country
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'bg-neutral-50 text-neutral-600 border border-neutral-200 hover:border-neutral-400'
+                )}
+              >
+                {country === 'all' ? '全部国家' : country}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* 城市筛选（有多个城市时才显示） */}
+        {availableCities.length > 2 && (
+          <div className="flex flex-wrap gap-2 pl-4 border-l-2 border-neutral-100">
+            {availableCities.map((city) => (
+              <button
+                key={city}
+                onClick={() => setSelectedCity(city)}
+                className={clsx(
+                  'px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200',
+                  selectedCity === city
+                    ? 'bg-indigo-400 text-white shadow-md'
+                    : 'bg-neutral-50 text-neutral-500 border border-neutral-200 hover:border-neutral-400'
+                )}
+              >
+                {city === 'all' ? '全部城市' : city}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Venues Grid */}
       {filteredVenues.length > 0 ? (

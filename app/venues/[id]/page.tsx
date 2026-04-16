@@ -22,7 +22,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!venue) return {};
 
   return {
-    title: `${venue.name_zh} | ARTWALK`,
+    // NOTE: 只写场馆名称，root layout 的 template '%s | ARTWALK' 会自动追加
+    title: venue.name_zh,
     description: venue.description_zh || venue.address_zh || '场馆详情',
     openGraph: {
       title: `${venue.name_zh} | ARTWALK`,

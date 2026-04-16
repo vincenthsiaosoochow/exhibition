@@ -9,6 +9,16 @@ import { motion, AnimatePresence } from 'motion/react';
 import clsx from 'clsx';
 import { useAppStore } from '@/lib/store';
 
+// NOTE: 洲际英文键对应中文显示，与后台选择项一致
+const CONTINENT_LABELS: Record<string, string> = {
+  Asia: '亚洲',
+  Europe: '欧洲',
+  'North America': '北美洲',
+  'South America': '南美洲',
+  Africa: '非洲',
+  Oceania: '大洋洲',
+};
+
 export default function Discover() {
   const { t, language } = useTranslation();
 
@@ -81,7 +91,11 @@ export default function Discover() {
     return filteredExhibitions.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredExhibitions, currentPage]);
 
-  const regions = ['all', 'Europe', 'Asia', 'North America', 'Africa'];
+  // NOTE: 使用数据库实际有的洲际，动态构建筛选列表
+  const regions = useMemo(() => {
+    const continents = Array.from(new Set(allExhibitions.map(ex => ex.location.continent).filter(Boolean)));
+    return ['all', ...continents];
+  }, [allExhibitions]);
 
   const availableCountries = useMemo(() => {
     let countries = allExhibitions.map(ex => ex.location.country);
@@ -164,7 +178,7 @@ export default function Discover() {
                           selectedRegion === region ? "bg-fuhung-blue text-white shadow-md shadow-fuhung-blue/20" : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
                         )}
                       >
-                        {region === 'all' ? t('discover.all') : region}
+                        {region === 'all' ? t('discover.all') : (CONTINENT_LABELS[region] ?? region)}
                       </button>
                     ))}
                   </div>

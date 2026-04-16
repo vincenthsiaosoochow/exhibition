@@ -39,7 +39,10 @@ export default function Home() {
     );
   });
 
-  const trending = filteredExhibitions.filter(e => e.status === 'recent').slice(0, 3);
+  // NOTE: 最新展览 — 按 startDate 降序取最近3个，与 status 无关
+  const latestExhibitions = [...filteredExhibitions]
+    .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
+    .slice(0, 3);
   const endingSoon = filteredExhibitions.filter(e => e.status === 'ending').slice(0, 3);
 
   if (searchQuery) {
@@ -124,17 +127,17 @@ export default function Home() {
 
       {!loading && (
         <>
-          {/* Trending Section */}
-          {trending.length > 0 && (
+          {/* Latest Exhibitions Section */}
+          {latestExhibitions.length > 0 && (
             <section>
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold tracking-tight">{t('home.trending')}</h2>
+                <h2 className="text-2xl font-bold tracking-tight">最新展览</h2>
                 <Link href="/discover" className="text-sm font-medium text-neutral-500 hover:text-black flex items-center">
                   {t('discover.all')} <ChevronRight className="w-4 h-4 ml-1" />
                 </Link>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {trending.map((exhibition) => (
+                {latestExhibitions.map((exhibition) => (
                   <ExhibitionCard key={exhibition.id} exhibition={exhibition} />
                 ))}
               </div>

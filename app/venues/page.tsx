@@ -8,7 +8,8 @@ import VenuesClient from './VenuesClient';
 import { fetchVenues } from '@/lib/data';
 
 export const metadata: Metadata = {
-  title: '场馆 | ARTWALK',
+  // NOTE: 只写页面名称，root layout 的 template '%s | ARTWALK' 会自动追加
+  title: '场馆',
   description: '探索全球艺术场馆',
   openGraph: {
     title: '场馆 | ARTWALK',
