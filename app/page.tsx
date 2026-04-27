@@ -82,7 +82,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             className="text-4xl md:text-5xl font-bold mb-4 leading-tight"
           >
-            发现全球最棒的艺术展览
+            看艺术，看世界
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -90,7 +90,7 @@ export default function Home() {
             transition={{ delay: 0.1 }}
             className="text-lg text-neutral-300 mb-8"
           >
-            探索为您精选的热门、即将举办以及必看的全球艺术盛宴。
+            发现全球正在进行中的艺术展
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}

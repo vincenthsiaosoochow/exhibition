@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, Home, Compass, Flame, Building2, Menu, X } from 'lucide-react';
+import { Search, Home, Compass, Building2 } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { motion, AnimatePresence } from 'motion/react';
@@ -22,6 +22,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isMounted, setIsMounted] = useState(false);
   const pathname = usePathname();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isQrOpen, setIsQrOpen] = useState(false);
   const searchQuery = useAppStore((state) => state.searchQuery);
   const setSearchQuery = useAppStore((state) => state.setSearchQuery);
 
@@ -46,7 +47,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { href: '/', icon: Home, label: t('nav.home') },
     { href: '/discover', icon: Compass, label: t('nav.discover') },
-    { href: '/trending', icon: Flame, label: t('nav.trending') },
     { href: '/venues', icon: Building2, label: t('nav.venues') },
   ];
 
@@ -148,17 +148,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        {/* 底部版权信息 */}
-        <div className="p-4 border-t border-neutral-100">
+        {/* 底部版权 + 公众号入口 */}
+        <div className="p-4 border-t border-neutral-100 space-y-2">
           <p className="text-xs text-neutral-400 leading-relaxed">
             Copyright © 2026 Artwalk.<br />All Rights Reserved.
           </p>
-          <a
-            href="mailto:service@artwalk.cn"
-            className="text-xs text-neutral-400 hover:text-neutral-600 transition-colors"
-          >
-            service@artwalk.cn
-          </a>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setIsQrOpen(true)}
+              className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors underline underline-offset-2"
+            >
+              展览收录
+            </button>
+            <button
+              onClick={() => setIsQrOpen(true)}
+              className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors underline underline-offset-2"
+            >
+              联系我们
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -167,10 +175,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="max-w-7xl mx-auto h-full">
           {children}
         </div>
-        {/* 移动端底部版权（显示在内容区末尾，让用户可以滚动看到） */}
-        <div className="md:hidden px-4 py-6 text-center border-t border-neutral-100 mt-8">
+        {/* 移动端底部版权（显示在内容区末尾） */}
+        <div className="md:hidden px-4 py-6 text-center border-t border-neutral-100 mt-8 space-y-2">
           <p className="text-xs text-neutral-400">Copyright © 2026 Artwalk. All Rights Reserved.</p>
-          <a href="mailto:service@artwalk.cn" className="text-xs text-neutral-400">Contact us：service@artwalk.cn</a>
+          <div className="flex justify-center gap-4">
+            <button
+              onClick={() => setIsQrOpen(true)}
+              className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors underline underline-offset-2"
+            >
+              展览收录
+            </button>
+            <button
+              onClick={() => setIsQrOpen(true)}
+              className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors underline underline-offset-2"
+            >
+              联系我们
+            </button>
+          </div>
         </div>
       </main>
 
@@ -197,6 +218,51 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           })}
         </div>
       </nav>
+      {/* 微信公众号二维码弹窗 */}
+      <AnimatePresence>
+        {isQrOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+            onClick={() => setIsQrOpen(false)}
+          >
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
+              className="relative z-10 bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center gap-4 max-w-xs w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* 关闭按钮 */}
+              <button
+                onClick={() => setIsQrOpen(false)}
+                className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-neutral-100 transition-colors text-neutral-400"
+                aria-label="关闭"
+              >
+                {/* 内联 X 图标，避免重新引入 lucide */}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+
+              <h3 className="text-lg font-bold text-neutral-900">扫码关注公众号</h3>
+              <p className="text-sm text-neutral-500 text-center">展览收录 &amp; 联系我们</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/wechat-qr.png"
+                alt="ARTWALK 微信公众号二维码"
+                className="w-52 h-52 object-contain rounded-xl"
+              />
+              <p className="text-xs text-neutral-400">微信扫一扫关注我们</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
