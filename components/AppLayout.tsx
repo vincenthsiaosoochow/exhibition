@@ -158,12 +158,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               onClick={() => setIsQrOpen(true)}
               className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors underline underline-offset-2"
             >
-              展览收录
-            </button>
-            <button
-              onClick={() => setIsQrOpen(true)}
-              className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors underline underline-offset-2"
-            >
               联系我们
             </button>
           </div>
@@ -179,12 +173,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="md:hidden px-4 py-6 text-center border-t border-neutral-100 mt-8 space-y-2">
           <p className="text-xs text-neutral-400">Copyright © 2026 Artwalk. All Rights Reserved.</p>
           <div className="flex justify-center gap-4">
-            <button
-              onClick={() => setIsQrOpen(true)}
-              className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors underline underline-offset-2"
-            >
-              展览收录
-            </button>
             <button
               onClick={() => setIsQrOpen(true)}
               className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors underline underline-offset-2"
@@ -254,7 +242,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <p className="text-sm text-neutral-500 text-center">展览收录 &amp; 联系我们</p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/wechat-qr.png"
+                src="/qrcode258.jpg"
                 alt="ARTWALK 微信公众号二维码"
                 className="w-52 h-52 object-contain rounded-xl"
               />
